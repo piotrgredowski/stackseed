@@ -15,6 +15,7 @@ _exclude:
   - "{% if backend != 'python' or backend_mode != 'cli' %}src/{{ project_slug | replace('-', '_') }}/cli.py{% endif %}"
   - "{% if frontend != 'solid_tailwind_shadcn' %}src/main.tsx{% endif %}"
   - "{% if backend != 'python' and frontend != 'solid_tailwind_shadcn' %}src{% endif %}"
+  - "{% if backend not in ['python', 'go'] or backend_mode != 'cli' or config_enabled != 'true' %}config{% endif %}"
 
 project_name:
   type: str

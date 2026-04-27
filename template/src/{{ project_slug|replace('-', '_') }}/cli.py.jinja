@@ -6,11 +6,53 @@ from __future__ import annotations
 import argparse
 from collections.abc import Sequence
 from pathlib import Path
+import time
+
+
+def project_root() -> Path:
+    """Return the generated project root independent of the current directory."""
+    return Path(__file__).resolve().parents[2]
 
 
 def logs_path() -> Path:
     """Return the path used by the generated log commands."""
-    return Path.cwd() / "logs" / "{{ project_slug }}.log"
+    return project_root() / "logs" / "{{ project_slug }}.log"
+
+
+{% if config_enabled == "true" -%}
+def config_path() -> Path:
+    """Return the generated config file path."""
+    return project_root() / "config" / "{{ project_slug }}.toml"
+
+
+{% endif -%}
+def non_negative_int(value: str) -> int:
+    """Parse a non-negative line count."""
+    count = int(value)
+    if count < 0:
+        raise argparse.ArgumentTypeError("--lines must be non-negative")
+    return count
+
+
+def read_new_lines(path: Path, offset: int) -> tuple[list[str], int]:
+    """Read complete lines from offset, tolerating a missing log file."""
+    if not path.exists():
+        return [], 0
+    with path.open() as file:
+        file.seek(offset)
+        lines = file.read().splitlines()
+        return lines, file.tell()
+
+
+def print_tail(path: Path, lines: int) -> int:
+    """Print the requested trailing log lines and return the follow offset."""
+    if not path.exists():
+        return 0
+    with path.open() as file:
+        content = file.read().splitlines()
+        for line in content[-lines:] if lines > 0 else []:
+            print(line, flush=True)
+        return file.tell()
 
 
 def _show_logs_path(_args: argparse.Namespace) -> int:
@@ -18,33 +60,46 @@ def _show_logs_path(_args: argparse.Namespace) -> int:
     return 0
 
 
+{% if config_enabled == "true" -%}
+def _show_config_path(_args: argparse.Namespace) -> int:
+    print(config_path())
+    return 0
+
+
+{% endif -%}
 def _show_logs(args: argparse.Namespace) -> int:
     path = logs_path()
-    if not path.exists():
-        return 0
-    lines = path.read_text().splitlines()
-    selected = lines[-args.lines :] if args.lines > 0 else []
-    for line in selected:
-        print(line)
+    offset = print_tail(path, args.lines)
+    if args.follow:
+        while True:
+            new_lines, offset = read_new_lines(path, offset)
+            for line in new_lines:
+                print(line, flush=True)
+            time.sleep(0.1)
     return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
     """Build the CLI parser."""
     parser = argparse.ArgumentParser(
-        prog="{{ project_slug }}", description="{{ description }}"
+        prog="{{ project_slug }}",
+        description="{{ description }}",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     logs_parser = subparsers.add_parser("show-logs", help="Print recent application logs.")
     logs_parser.add_argument(
-        "--lines", type=int, default=10, help="Number of trailing lines to print."
+        "--lines", type=non_negative_int, default=10, help="Number of trailing lines to print."
     )
     logs_parser.add_argument("--follow", action="store_true", help="Wait for new log lines.")
     logs_parser.set_defaults(handler=_show_logs)
 
     path_parser = subparsers.add_parser("show-logs-path", help="Print the application log path.")
     path_parser.set_defaults(handler=_show_logs_path)
+{% if config_enabled == "true" %}
+    config_parser = subparsers.add_parser("show-config-path", help="Print the config file path.")
+    config_parser.set_defaults(handler=_show_config_path)
+{% endif %}
     return parser
 
 
@@ -59,13 +114,54 @@ def main(argv: Sequence[str] | None = None) -> int:
 from __future__ import annotations
 
 from pathlib import Path
+import time
 
 import click
 
 
+def project_root() -> Path:
+    """Return the generated project root independent of the current directory."""
+    return Path(__file__).resolve().parents[2]
+
+
 def logs_path() -> Path:
     """Return the path used by the generated log commands."""
-    return Path.cwd() / "logs" / "{{ project_slug }}.log"
+    return project_root() / "logs" / "{{ project_slug }}.log"
+
+
+{% if config_enabled == "true" -%}
+def config_path() -> Path:
+    """Return the generated config file path."""
+    return project_root() / "config" / "{{ project_slug }}.toml"
+
+
+{% endif -%}
+def non_negative_int(_ctx: click.Context, _param: click.Parameter, value: int) -> int:
+    """Validate a non-negative line count."""
+    if value < 0:
+        raise click.BadParameter("must be non-negative")
+    return value
+
+
+def read_new_lines(path: Path, offset: int) -> tuple[list[str], int]:
+    """Read complete lines from offset, tolerating a missing log file."""
+    if not path.exists():
+        return [], 0
+    with path.open() as file:
+        file.seek(offset)
+        lines = file.read().splitlines()
+        return lines, file.tell()
+
+
+def print_tail(path: Path, lines: int) -> int:
+    """Print the requested trailing log lines and return the follow offset."""
+    if not path.exists():
+        return 0
+    with path.open() as file:
+        content = file.read().splitlines()
+        for line in content[-lines:] if lines > 0 else []:
+            click.echo(line)
+        return file.tell()
 
 
 @click.group(help="{{ description }}")
@@ -79,18 +175,20 @@ def app() -> None:
     default=10,
     show_default=True,
     type=int,
+    callback=non_negative_int,
     help="Number of trailing lines to print.",
 )
 @click.option("--follow", is_flag=True, help="Wait for new log lines.")
 def show_logs(lines: int, follow: bool) -> None:
     """Print recent application logs."""
-    del follow
     path = logs_path()
-    if not path.exists():
-        return
-    selected = path.read_text().splitlines()[-lines:] if lines > 0 else []
-    for line in selected:
-        click.echo(line)
+    offset = print_tail(path, lines)
+    if follow:
+        while True:
+            new_lines, offset = read_new_lines(path, offset)
+            for line in new_lines:
+                click.echo(line)
+            time.sleep(0.1)
 
 
 @app.command("show-logs-path")
@@ -99,6 +197,14 @@ def show_logs_path() -> None:
     click.echo(logs_path())
 
 
+{% if config_enabled == "true" -%}
+@app.command("show-config-path")
+def show_config_path() -> None:
+    """Print the config file path."""
+    click.echo(config_path())
+
+
+{% endif -%}
 def main() -> None:
     """Run the CLI."""
     app()

@@ -2,8 +2,13 @@ package main
 
 {% if backend_mode == "cli" -%}
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"os"
+	"path/filepath"
+	"runtime"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -27,6 +32,9 @@ func newRootCommand() *cobra.Command {
 	}
 	rootCmd.AddCommand(newShowLogsPathCommand())
 	rootCmd.AddCommand(newShowLogsCommand())
+{% if config_enabled == "true" %}
+	rootCmd.AddCommand(newShowConfigPathCommand())
+{% endif %}
 	return rootCmd
 }
 
@@ -46,11 +54,28 @@ func newShowLogsCommand() *cobra.Command {
 	command := &cobra.Command{
 		Use:   "show-logs",
 		Short: "Print recent application logs",
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Fprintf(cmd.OutOrStdout(), "Showing last %d log lines from %s\n", lines, logPath())
-			if follow {
-				fmt.Fprintln(cmd.OutOrStdout(), "Follow mode is not implemented yet.")
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if lines < 0 {
+				return fmt.Errorf("--lines must be non-negative")
 			}
+			offset, err := printTail(cmd.OutOrStdout(), logPath(), lines)
+			if err != nil {
+				return err
+			}
+			if follow {
+				for {
+					var lines []string
+					lines, offset, err = readNewLines(logPath(), offset)
+					if err != nil {
+						return err
+					}
+					for _, line := range lines {
+						fmt.Fprintln(cmd.OutOrStdout(), line)
+					}
+					time.Sleep(100 * time.Millisecond)
+				}
+			}
+			return nil
 		},
 	}
 	command.Flags().BoolVar(&follow, "follow", false, "stream appended log lines")
@@ -58,8 +83,107 @@ func newShowLogsCommand() *cobra.Command {
 	return command
 }
 
+{% if config_enabled == "true" -%}
+func newShowConfigPathCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "show-config-path",
+		Short: "Print the config file path",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Fprintln(cmd.OutOrStdout(), configPath())
+		},
+	}
+}
+
+{% endif -%}
 func logPath() string {
-	return os.TempDir() + string(os.PathSeparator) + "{{ project_slug }}.log"
+	return filepath.Join(projectRoot(), "logs", "{{ project_slug }}.log")
+}
+
+{% if config_enabled == "true" -%}
+func configPath() string {
+	return filepath.Join(projectRoot(), "config", "{{ project_slug }}.toml")
+}
+
+{% endif -%}
+func projectRoot() string {
+	_, file, _, ok := runtime.Caller(0)
+	if !ok {
+		wd, err := os.Getwd()
+		if err != nil {
+			return "."
+		}
+		return wd
+	}
+	return filepath.Clean(filepath.Join(filepath.Dir(file), "..", ".."))
+}
+
+func printTail(writer io.Writer, path string, count int) (int64, error) {
+	if count < 0 {
+		return 0, fmt.Errorf("--lines must be non-negative")
+	}
+	file, err := os.Open(path)
+	if os.IsNotExist(err) {
+		return 0, nil
+	}
+	if err != nil {
+		return 0, err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	var lines []string
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+	if err := scanner.Err(); err != nil {
+		return 0, err
+	}
+	start := 0
+	if count > 0 && len(lines) > count {
+		start = len(lines) - count
+	}
+	if count == 0 {
+		start = len(lines)
+	}
+	for _, line := range lines[start:] {
+		fmt.Fprintln(writer, line)
+	}
+	offset, err := file.Seek(0, io.SeekCurrent)
+	if err != nil {
+		return 0, err
+	}
+	return offset, nil
+}
+
+func readNewLines(path string, offset int64) ([]string, int64, error) {
+	file, err := os.Open(path)
+	if os.IsNotExist(err) {
+		return nil, 0, nil
+	}
+	if err != nil {
+		return nil, offset, err
+	}
+	defer file.Close()
+	if _, err := file.Seek(offset, io.SeekStart); err != nil {
+		return nil, offset, err
+	}
+	scanner := bufio.NewScanner(file)
+	var lines []string
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, offset, err
+	}
+	newOffset, err := file.Seek(0, io.SeekCurrent)
+	if err != nil {
+		return nil, offset, err
+	}
+	return lines, newOffset, nil
+}
+
+func init() {
+	cobra.EnableCommandSorting = false
 }
 {% else -%}
 import (
