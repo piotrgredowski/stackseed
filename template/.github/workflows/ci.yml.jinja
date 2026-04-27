@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+{% if backend == "none" and frontend == "none" %}
+  validation:
+    name: Stack-neutral validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Report validation status
+        run: echo "No stack-specific validators configured yet."
+{% endif %}
+{% if backend == "python" %}
+  python:
+    name: Python validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+      - name: Install Python dependencies
+        run: uv sync --dev
+      - name: Run Python tests
+        run: uv run pytest
+      - name: Run Python lint
+        run: uv run ruff check .
+      - name: Check Python formatting
+        run: uv run ruff format --check .
+      - name: Run Python type check
+        run: uv run pyright
+{% endif %}
+{% if backend == "go" %}
+  go:
+    name: Go validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache: true
+      - name: Download Go dependencies
+        run: go mod download
+      - name: Run Go tests
+        run: go test ./...
+      - name: Run Go vet
+        run: go vet ./...
+      - name: Check Go formatting
+        run: test -z "$(gofmt -l .)"
+{% endif %}
+{% if frontend == "solid_tailwind_shadcn" %}
+  frontend:
+    name: Frontend validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "pnpm"
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile=false
+      - name: Run frontend type check
+        run: pnpm typecheck
+      - name: Run frontend tests
+        run: pnpm test
+      - name: Run frontend lint
+        run: pnpm lint
+      - name: Build frontend
+        run: pnpm build
+{% endif %}
