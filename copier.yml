@@ -11,6 +11,7 @@ _exclude:
   - "{% if frontend != 'solid_tailwind_shadcn' %}vite.config.ts{% endif %}"
   - "{% if frontend != 'solid_tailwind_shadcn' %}tailwind.config.ts{% endif %}"
   - "{% if backend != 'python' %}src/{{ project_slug | replace('-', '_') }}{% endif %}"
+  - "{% if backend != 'python' or backend_mode != 'cli' %}src/{{ project_slug | replace('-', '_') }}/cli.py{% endif %}"
   - "{% if frontend != 'solid_tailwind_shadcn' %}src/main.tsx{% endif %}"
   - "{% if backend != 'python' and frontend != 'solid_tailwind_shadcn' %}src{% endif %}"
 

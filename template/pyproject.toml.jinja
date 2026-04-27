@@ -3,16 +3,26 @@ name = "{{ project_slug }}"
 version = "0.1.0"
 description = "{{ description }}"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+{% if backend_mode == "cli" and python_cli_framework == "click" -%}
+    "click>=8.0",
+{% endif -%}
+]
+
+{% if backend_mode == "cli" -%}
+[project.scripts]
+{{ project_slug }} = "{{ project_slug | replace('-', '_') }}.cli:main"
+
+{% endif -%}
+[build-system]
+requires = ["uv_build>=0.11.0,<0.12.0"]
+build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
     "pytest>=8.0",
     "ruff>=0.8",
     "pyright>=1.1",
-{% if backend_mode == "cli" and python_cli_framework == "click" -%}
-    "click>=8.0",
-{% endif -%}
 ]
 
 [tool.pytest.ini_options]
@@ -20,3 +30,8 @@ testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 100
+
+[tool.pyright]
+include = ["src", "tests"]
+pythonVersion = "3.11"
+typeCheckingMode = "strict"

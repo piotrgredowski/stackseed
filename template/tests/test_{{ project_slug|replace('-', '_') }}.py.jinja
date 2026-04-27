@@ -1,0 +1,39 @@
+"""Tests for the generated {{ project_name }} Python package."""
+
+from __future__ import annotations
+
+{% if backend_mode == "cli" and python_cli_framework == "argparse" -%}
+from pytest import CaptureFixture
+
+from {{ project_slug | replace('-', '_') }}.cli import main
+{% endif -%}
+import {{ project_slug | replace('-', '_') }} as package
+
+
+def test_package_exposes_version() -> None:
+    assert package.__version__ == "0.1.0"
+
+
+{% if backend_mode == "cli" and python_cli_framework == "argparse" -%}
+def test_argparse_cli_help_lists_log_commands(capsys: CaptureFixture[str]) -> None:
+    try:
+        main(["--help"])
+    except SystemExit as exc:
+        assert exc.code == 0
+    output = capsys.readouterr().out
+    assert "show-logs" in output
+    assert "show-logs-path" in output
+{% elif backend_mode == "cli" and python_cli_framework == "click" -%}
+def test_click_cli_help_lists_log_commands() -> None:
+    from click.testing import CliRunner
+
+    from {{ project_slug | replace('-', '_') }}.cli import app
+
+    result = CliRunner().invoke(app, ["--help"])
+    assert result.exit_code == 0
+    assert "show-logs" in result.output
+    assert "show-logs-path" in result.output
+{% else -%}
+def test_library_has_project_metadata() -> None:
+    assert package.__doc__ is not None
+{% endif -%}

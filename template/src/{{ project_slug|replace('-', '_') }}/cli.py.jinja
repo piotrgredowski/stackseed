@@ -1,0 +1,105 @@
+{% if backend_mode == "cli" and python_cli_framework == "argparse" -%}
+"""Command line interface for {{ project_name }}."""
+
+from __future__ import annotations
+
+import argparse
+from collections.abc import Sequence
+from pathlib import Path
+
+
+def logs_path() -> Path:
+    """Return the path used by the generated log commands."""
+    return Path.cwd() / "logs" / "{{ project_slug }}.log"
+
+
+def _show_logs_path(_args: argparse.Namespace) -> int:
+    print(logs_path())
+    return 0
+
+
+def _show_logs(args: argparse.Namespace) -> int:
+    path = logs_path()
+    if not path.exists():
+        return 0
+    lines = path.read_text().splitlines()
+    selected = lines[-args.lines :] if args.lines > 0 else []
+    for line in selected:
+        print(line)
+    return 0
+
+
+def build_parser() -> argparse.ArgumentParser:
+    """Build the CLI parser."""
+    parser = argparse.ArgumentParser(
+        prog="{{ project_slug }}", description="{{ description }}"
+    )
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    logs_parser = subparsers.add_parser("show-logs", help="Print recent application logs.")
+    logs_parser.add_argument(
+        "--lines", type=int, default=10, help="Number of trailing lines to print."
+    )
+    logs_parser.add_argument("--follow", action="store_true", help="Wait for new log lines.")
+    logs_parser.set_defaults(handler=_show_logs)
+
+    path_parser = subparsers.add_parser("show-logs-path", help="Print the application log path.")
+    path_parser.set_defaults(handler=_show_logs_path)
+    return parser
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    """Run the CLI."""
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    return args.handler(args)
+{% elif backend_mode == "cli" and python_cli_framework == "click" -%}
+"""Command line interface for {{ project_name }}."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+import click
+
+
+def logs_path() -> Path:
+    """Return the path used by the generated log commands."""
+    return Path.cwd() / "logs" / "{{ project_slug }}.log"
+
+
+@click.group(help="{{ description }}")
+def app() -> None:
+    """Run the command group."""
+
+
+@app.command("show-logs")
+@click.option(
+    "--lines",
+    default=10,
+    show_default=True,
+    type=int,
+    help="Number of trailing lines to print.",
+)
+@click.option("--follow", is_flag=True, help="Wait for new log lines.")
+def show_logs(lines: int, follow: bool) -> None:
+    """Print recent application logs."""
+    del follow
+    path = logs_path()
+    if not path.exists():
+        return
+    selected = path.read_text().splitlines()[-lines:] if lines > 0 else []
+    for line in selected:
+        click.echo(line)
+
+
+@app.command("show-logs-path")
+def show_logs_path() -> None:
+    """Print the application log path."""
+    click.echo(logs_path())
+
+
+def main() -> None:
+    """Run the CLI."""
+    app()
+{% endif -%}

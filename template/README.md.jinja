@@ -35,6 +35,7 @@
 {% if backend == "python" -%}
 - Python tests: `uv run pytest`
 - Python lint: `uv run ruff check .`
+- Python format check: `uv run ruff format --check .`
 - Python type check: `uv run pyright`
 {% endif -%}
 {% if backend == "go" -%}
