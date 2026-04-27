@@ -1,0 +1,12 @@
+package {{ project_slug|replace('-', '_') }}
+
+import "fmt"
+
+const ProjectName = "{{ project_name }}"
+
+func Greeting(name string) string {
+	if name == "" {
+		name = ProjectName
+	}
+	return fmt.Sprintf("Hello from %s", name)
+}

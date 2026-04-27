@@ -1,0 +1,19 @@
+package {{ project_slug|replace('-', '_') }}
+
+import "testing"
+
+func TestGreeting(t *testing.T) {
+	got := Greeting("Generated Go")
+	want := "Hello from Generated Go"
+	if got != want {
+		t.Fatalf("Greeting() = %q, want %q", got, want)
+	}
+}
+
+func TestGreetingUsesProjectNameByDefault(t *testing.T) {
+	got := Greeting("")
+	want := "Hello from {{ project_name }}"
+	if got != want {
+		t.Fatalf("Greeting(\"\") = %q, want %q", got, want)
+	}
+}

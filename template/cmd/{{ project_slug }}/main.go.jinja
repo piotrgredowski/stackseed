@@ -1,0 +1,74 @@
+package main
+
+{% if backend_mode == "cli" -%}
+import (
+	"fmt"
+	"os"
+
+	"github.com/spf13/cobra"
+
+	"example.com/{{ project_slug }}/internal/{{ project_slug|replace('-', '_') }}"
+)
+
+func main() {
+	rootCmd := newRootCommand()
+	if err := rootCmd.Execute(); err != nil {
+		os.Exit(1)
+	}
+}
+
+func newRootCommand() *cobra.Command {
+	rootCmd := &cobra.Command{
+		Use:   "{{ project_slug }}",
+		Short: "{{ description }}",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Fprintln(cmd.OutOrStdout(), {{ project_slug|replace('-', '_') }}.Greeting(""))
+		},
+	}
+	rootCmd.AddCommand(newShowLogsPathCommand())
+	rootCmd.AddCommand(newShowLogsCommand())
+	return rootCmd
+}
+
+func newShowLogsPathCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "show-logs-path",
+		Short: "Print the application log file path",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Fprintln(cmd.OutOrStdout(), logPath())
+		},
+	}
+}
+
+func newShowLogsCommand() *cobra.Command {
+	var follow bool
+	var lines int
+	command := &cobra.Command{
+		Use:   "show-logs",
+		Short: "Print recent application logs",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Fprintf(cmd.OutOrStdout(), "Showing last %d log lines from %s\n", lines, logPath())
+			if follow {
+				fmt.Fprintln(cmd.OutOrStdout(), "Follow mode is not implemented yet.")
+			}
+		},
+	}
+	command.Flags().BoolVar(&follow, "follow", false, "stream appended log lines")
+	command.Flags().IntVar(&lines, "lines", 10, "number of trailing log lines to print")
+	return command
+}
+
+func logPath() string {
+	return os.TempDir() + string(os.PathSeparator) + "{{ project_slug }}.log"
+}
+{% else -%}
+import (
+	"fmt"
+
+	"example.com/{{ project_slug }}/internal/{{ project_slug|replace('-', '_') }}"
+)
+
+func main() {
+	fmt.Println({{ project_slug|replace('-', '_') }}.Greeting(""))
+}
+{% endif -%}

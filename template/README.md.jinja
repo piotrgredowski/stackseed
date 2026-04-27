@@ -41,7 +41,7 @@
 {% if backend == "go" -%}
 - Go tests: `go test ./...`
 - Go vet: `go vet ./...`
-- Go format check: `gofmt -w` before committing changes.
+- Go format check: `test -z "$(gofmt -l .)"`
 {% endif -%}
 {% if frontend == "solid_tailwind_shadcn" -%}
 - Frontend type check: `pnpm typecheck`

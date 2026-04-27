@@ -5,6 +5,7 @@ _exclude:
   - "{% if backend != 'python' %}pyproject.toml{% endif %}"
   - "{% if backend != 'python' %}tests{% endif %}"
   - "{% if backend != 'go' %}go.mod{% endif %}"
+  - "{% if backend != 'go' or backend_mode != 'cli' %}go.sum{% endif %}"
   - "{% if backend != 'go' %}cmd{% endif %}"
   - "{% if backend != 'go' %}internal{% endif %}"
   - "{% if frontend != 'solid_tailwind_shadcn' %}package.json{% endif %}"
