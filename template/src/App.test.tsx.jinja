@@ -1,0 +1,19 @@
+import { afterEach, describe, expect, it } from "vitest";
+import { render } from "solid-js/web";
+import { App } from "./App";
+
+describe("App", () => {
+  afterEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  it("renders the generated project shell", () => {
+    const root = document.createElement("div");
+    document.body.append(root);
+
+    render(() => <App />, root);
+
+    expect(root.textContent).toContain("{{ project_name }}");
+    expect(root.textContent).toContain("Solid + Tailwind + shadcn-solid");
+  });
+});

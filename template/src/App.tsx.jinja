@@ -1,0 +1,19 @@
+export function App() {
+  return (
+    <main class="min-h-screen bg-slate-950 text-slate-50">
+      <section class="mx-auto flex min-h-screen max-w-4xl flex-col items-center justify-center gap-6 px-6 text-center">
+        <p class="rounded-full border border-cyan-300/30 bg-cyan-300/10 px-4 py-2 text-sm font-medium text-cyan-100">
+          Solid + Tailwind + shadcn-solid
+        </p>
+        <h1 class="text-4xl font-bold tracking-tight sm:text-6xl">{{ project_name }}</h1>
+        <p class="max-w-2xl text-lg text-slate-300">{{ description }}</p>
+        <a
+          class="rounded-md bg-cyan-300 px-4 py-2 font-semibold text-slate-950 shadow-lg shadow-cyan-950/40 transition hover:bg-cyan-200"
+          href="https://www.solidjs.com/"
+        >
+          Build with Solid
+        </a>
+      </section>
+    </main>
+  );
+}
