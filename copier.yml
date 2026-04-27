@@ -1,0 +1,90 @@
+_subdirectory: template
+_answers_file: ""
+
+_exclude:
+  - "{% if backend != 'python' %}pyproject.toml{% endif %}"
+  - "{% if backend != 'python' %}tests{% endif %}"
+  - "{% if backend != 'go' %}go.mod{% endif %}"
+  - "{% if backend != 'go' %}cmd{% endif %}"
+  - "{% if backend != 'go' %}internal{% endif %}"
+  - "{% if frontend != 'solid_tailwind_shadcn' %}package.json{% endif %}"
+  - "{% if frontend != 'solid_tailwind_shadcn' %}vite.config.ts{% endif %}"
+  - "{% if frontend != 'solid_tailwind_shadcn' %}tailwind.config.ts{% endif %}"
+  - "{% if backend != 'python' %}src/{{ project_slug | replace('-', '_') }}{% endif %}"
+  - "{% if frontend != 'solid_tailwind_shadcn' %}src/main.tsx{% endif %}"
+  - "{% if backend != 'python' and frontend != 'solid_tailwind_shadcn' %}src{% endif %}"
+
+project_name:
+  type: str
+  help: Human-readable project name.
+
+project_slug:
+  type: str
+  help: Filesystem- and package-friendly project slug.
+  default: "{{ project_name | lower | replace(' ', '-') | replace('_', '-') }}"
+  validator: >-
+    {% if not (project_slug | regex_search('^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$')) -%}
+    project_slug must start with a lowercase letter and contain only lowercase letters, digits, and single hyphens.
+    {%- endif %}
+
+description:
+  type: str
+  help: Short project description.
+
+author_name:
+  type: str
+  help: Project author or owning team.
+
+license:
+  type: str
+  help: Project license identifier.
+  default: MIT
+
+backend:
+  type: str
+  help: Backend stack to generate.
+  choices:
+    Python: python
+    Go: go
+    None: none
+  default: none
+
+backend_mode:
+  type: str
+  help: Backend mode to document and scaffold when applicable.
+  choices:
+    Library/service: library
+    CLI: cli
+  default: library
+
+python_cli_framework:
+  type: str
+  help: Python CLI framework when generating a Python CLI backend.
+  choices:
+    argparse: argparse
+    click: click
+  default: argparse
+  when: "{{ backend == 'python' and backend_mode == 'cli' }}"
+
+frontend:
+  type: str
+  help: Frontend stack to generate.
+  choices:
+    Solid + Tailwind + shadcn-solid: solid_tailwind_shadcn
+    None: none
+  default: none
+
+config_enabled:
+  type: str
+  help: Include a config scaffold for generated CLI stacks.
+  choices:
+    "true": "true"
+    "false": "false"
+  default: "false"
+
+ci_provider:
+  type: str
+  help: Continuous integration provider.
+  choices:
+    GitHub Actions: github
+  default: github

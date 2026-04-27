@@ -1,0 +1,28 @@
+# System files
+.DS_Store
+
+# Local environment
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# Go
+bin/
+coverage.out
+
+# Frontend
+node_modules/
+dist/
+build/
+coverage/
+
+# Scratchpad contents are local-only except for the placeholder.
+.scratchpad/*
+!.scratchpad/.gitkeep

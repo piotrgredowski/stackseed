@@ -1,0 +1,53 @@
+# {{ project_name }}
+
+{{ description }}
+
+## Project metadata
+
+- Author: {{ author_name }}
+- License: {{ license }}
+- Backend: {% if backend == "python" %}Python{% elif backend == "go" %}Go{% else %}None{% endif %}
+- Backend mode: {% if backend_mode == "cli" %}CLI{% else %}Library/service{% endif %}
+{% if backend == "python" and backend_mode == "cli" -%}
+- Python CLI framework: {{ python_cli_framework }}
+{% endif -%}
+- Frontend: {% if frontend == "solid_tailwind_shadcn" %}Solid + Tailwind + shadcn-solid{% else %}None{% endif %}
+- Config scaffold: {% if backend in ["python", "go"] and backend_mode == "cli" and config_enabled == "true" %}enabled{% else %}disabled{% endif %}
+- CI provider: GitHub Actions
+
+## Setup
+
+{% if backend == "python" -%}
+- Install Python dependencies: `uv sync --dev`
+{% endif -%}
+{% if backend == "go" -%}
+- Download Go dependencies: `go mod download`
+{% endif -%}
+{% if frontend == "solid_tailwind_shadcn" -%}
+- Install frontend dependencies: `pnpm install`
+{% endif -%}
+{% if backend == "none" and frontend == "none" -%}
+- No stack-specific setup is required yet.
+{% endif %}
+
+## Validation
+
+{% if backend == "python" -%}
+- Python tests: `uv run pytest`
+- Python lint: `uv run ruff check .`
+- Python type check: `uv run pyright`
+{% endif -%}
+{% if backend == "go" -%}
+- Go tests: `go test ./...`
+- Go vet: `go vet ./...`
+- Go format check: `gofmt -w` before committing changes.
+{% endif -%}
+{% if frontend == "solid_tailwind_shadcn" -%}
+- Frontend type check: `pnpm typecheck`
+- Frontend tests: `pnpm test`
+- Frontend lint: `pnpm lint`
+- Frontend build: `pnpm build`
+{% endif -%}
+{% if backend == "none" and frontend == "none" -%}
+- Add validators as project stacks are introduced.
+{% endif %}

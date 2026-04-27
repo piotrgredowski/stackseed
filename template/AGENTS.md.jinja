@@ -1,0 +1,24 @@
+# Agent Guidance
+
+## Project context
+
+This repository was generated from a generic Copier template.
+
+Selected stacks:
+- Backend: {{ backend }}
+- Backend mode: {{ backend_mode }}
+- Frontend: {{ frontend }}
+- Config scaffold: {% if backend in ["python", "go"] and backend_mode == "cli" and config_enabled == "true" %}enabled{% else %}disabled{% endif %}
+
+## Scratchpad policy
+
+Use `.scratchpad/` as the approved place for temporary scripts, experiments, and
+throwaway work. The directory is kept in version control with `.gitkeep`, while
+other scratchpad contents are ignored.
+
+## Validation
+
+Run the stack-specific commands documented in `README.md` before handing off
+changes.
+
+Do not put provider credentials, API keys, or external secrets in tracked files.
