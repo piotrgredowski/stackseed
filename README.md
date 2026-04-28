@@ -26,6 +26,28 @@ Optional stack choices add only the files and commands for the selected stacks:
 | CLI config scaffold | Enabled or disabled for generated CLI projects |
 | CI provider | GitHub Actions |
 
+## Generated project layout
+
+Generated projects keep shared files such as `README.md`, `AGENTS.md`,
+`.agents/`, `.scratchpad/`, `.gitignore`, `.editorconfig`, and
+`.github/workflows/ci.yml` at the project root.
+
+Single-stack projects keep the selected stack at the project root:
+
+- Python-only projects place `pyproject.toml`, `src/`, and `tests/` at the
+  root.
+- Go-only projects place `go.mod`, `cmd/`, and `internal/` at the root.
+- Frontend-only projects place `package.json`, Vite/TypeScript/Tailwind
+  configuration, `index.html`, and `src/` at the root.
+
+Full-stack projects use stack directories while keeping shared files at the
+root:
+
+- Backend assets are generated under `backend/`.
+- Frontend assets are generated under `frontend/`.
+- Backend validators run from `backend/`.
+- Frontend validators run from `frontend/`.
+
 ## Requirements
 
 To work on this template repository:
@@ -270,7 +292,24 @@ uvx copier copy --trust --defaults \
 ```
 
 Run the Python and frontend validation commands from the generated project's
-`README.md`.
+`README.md`. In full-stack generated projects, run Python or Go backend
+validators from `backend/` and frontend validators from `frontend/`:
+
+```sh
+cd ./full-stack-app/backend
+uv sync --dev
+uv run pytest
+uv run ruff check .
+uv run ruff format --check .
+uv run pyright
+
+cd ../frontend
+pnpm install
+pnpm typecheck
+pnpm test
+pnpm lint
+pnpm build
+```
 
 ## Generated CLI behavior
 
