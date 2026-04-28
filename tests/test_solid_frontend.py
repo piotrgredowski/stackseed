@@ -149,11 +149,12 @@ def test_python_and_go_backends_compose_with_frontend(tmp_path: Path) -> None:
     ]
     for name, answers in samples:
         project = render_project(tmp_path, name, **answers)
-        assert (project / "package.json").is_file()
-        assert (project / "src" / "main.tsx").is_file()
+        assert (project / "frontend" / "package.json").is_file()
+        assert (project / "frontend" / "src" / "main.tsx").is_file()
         if answers["backend"] == "python":
-            assert (project / "pyproject.toml").is_file()
-            assert not (project / "go.mod").exists()
+            assert (project / "backend" / "pyproject.toml").is_file()
+            assert not (project / "backend" / "go.mod").exists()
         else:
-            assert (project / "go.mod").is_file()
-            assert not (project / "pyproject.toml").exists()
+            assert (project / "backend" / "go.mod").is_file()
+            assert not (project / "backend" / "pyproject.toml").exists()
+        assert not (project / "package.json").exists()

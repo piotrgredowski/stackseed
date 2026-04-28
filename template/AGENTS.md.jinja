@@ -18,7 +18,11 @@ other scratchpad contents are ignored.
 
 ## Validation
 
-Run the stack-specific commands documented in `README.md` before handing off
-changes.
+{% if backend in ["python", "go"] and frontend == "solid_tailwind_shadcn" -%}
+Run the stack-specific commands documented in `README.md` before handing off changes.
+Run backend commands from `backend/` and frontend commands from `frontend/`.
+{% else -%}
+Run the stack-specific commands documented in `README.md` before handing off changes.
+{% endif %}
 
 Do not put provider credentials, API keys, or external secrets in tracked files.

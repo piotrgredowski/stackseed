@@ -115,10 +115,23 @@ def test_representative_combinations_generate_and_include_only_selected_stacks(
     ]:
         assert (project / required).is_file(), f"{sample.sample_id} missing {required}"
 
-    assert (project / "pyproject.toml").exists() is (sample.backend == "python")
-    assert (project / "go.mod").exists() is (sample.backend == "go")
-    assert (project / "package.json").exists() is (sample.frontend == "solid_tailwind_shadcn")
-    assert (project / "config" / f"{sample.sample_id}.toml").exists() is sample.has_config
+    backend_root = project / "backend" if sample.is_full_stack else project
+    frontend_root = project / "frontend" if sample.is_full_stack else project
+
+    assert (backend_root / "pyproject.toml").exists() is (sample.backend == "python")
+    assert (backend_root / "go.mod").exists() is (sample.backend == "go")
+    assert (frontend_root / "package.json").exists() is (sample.frontend == "solid_tailwind_shadcn")
+    assert (backend_root / "config" / f"{sample.sample_id}.toml").exists() is sample.has_config
+
+    if sample.is_full_stack:
+        assert not (project / "pyproject.toml").exists()
+        assert not (project / "go.mod").exists()
+        assert not (project / "package.json").exists()
+        assert (project / "backend").is_dir()
+        assert (project / "frontend").is_dir()
+    else:
+        assert not (project / "backend").exists()
+        assert not (project / "frontend").exists()
 
     all_text = "\n".join(
         path.read_text(errors="ignore")
@@ -169,7 +182,7 @@ def test_representative_generated_validators_pass(
     project = render_project(tmp_path, sample)
 
     for command in sample.validators:
-        result = run_command(command, cwd=project, timeout=240)
+        result = run_command(command, cwd=project.joinpath(*sample.cwd_for(command)), timeout=240)
         assert result.returncode == 0, (
             f"{sample.sample_id} failed {' '.join(command)}\n{result.stdout}"
         )
@@ -177,7 +190,7 @@ def test_representative_generated_validators_pass(
             assert result.stdout.strip() == ""
 
     for command in sample.cli_help:
-        result = run_command(command, cwd=project, timeout=120)
+        result = run_command(command, cwd=project.joinpath(*sample.cwd_for(command)), timeout=120)
         assert result.returncode == 0, (
             f"{sample.sample_id} failed {' '.join(command)}\n{result.stdout}"
         )

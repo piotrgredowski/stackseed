@@ -26,6 +26,19 @@ class RepresentativeSample:
     def has_config(self) -> bool:
         return self.is_cli and self.answers["config_enabled"] == "true"
 
+    @property
+    def is_full_stack(self) -> bool:
+        return self.backend in {"python", "go"} and self.frontend == "solid_tailwind_shadcn"
+
+    def cwd_for(self, command: tuple[str, ...]) -> tuple[str, ...]:
+        if not self.is_full_stack:
+            return ()
+        if command[0] in {"uv", "go", "gofmt"}:
+            return ("backend",)
+        if command[0] == "pnpm":
+            return ("frontend",)
+        return ()
+
 
 BASE_ANSWERS = {
     "author_name": "Template Tester",

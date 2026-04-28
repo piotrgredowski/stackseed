@@ -30,15 +30,20 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@v4
       - name: Install Python dependencies
-        run: uv sync --dev
+        {% if frontend == "solid_tailwind_shadcn" %}working-directory: backend
+        {% endif %}run: uv sync --dev
       - name: Run Python tests
-        run: uv run pytest
+        {% if frontend == "solid_tailwind_shadcn" %}working-directory: backend
+        {% endif %}run: uv run pytest
       - name: Run Python lint
-        run: uv run ruff check .
+        {% if frontend == "solid_tailwind_shadcn" %}working-directory: backend
+        {% endif %}run: uv run ruff check .
       - name: Check Python formatting
-        run: uv run ruff format --check .
+        {% if frontend == "solid_tailwind_shadcn" %}working-directory: backend
+        {% endif %}run: uv run ruff format --check .
       - name: Run Python type check
-        run: uv run pyright
+        {% if frontend == "solid_tailwind_shadcn" %}working-directory: backend
+        {% endif %}run: uv run pyright
 {% endif %}
 {% if backend == "go" %}
   go:
@@ -53,13 +58,17 @@ jobs:
           go-version: "1.26"
           cache: true
       - name: Download Go dependencies
-        run: go mod download
+        {% if frontend == "solid_tailwind_shadcn" %}working-directory: backend
+        {% endif %}run: go mod download
       - name: Run Go tests
-        run: go test ./...
+        {% if frontend == "solid_tailwind_shadcn" %}working-directory: backend
+        {% endif %}run: go test ./...
       - name: Run Go vet
-        run: go vet ./...
+        {% if frontend == "solid_tailwind_shadcn" %}working-directory: backend
+        {% endif %}run: go vet ./...
       - name: Check Go formatting
-        run: test -z "$(gofmt -l .)"
+        {% if frontend == "solid_tailwind_shadcn" %}working-directory: backend
+        {% endif %}run: test -z "$(gofmt -l .)"
 {% endif %}
 {% if frontend == "solid_tailwind_shadcn" %}
   frontend:
@@ -78,13 +87,18 @@ jobs:
           node-version: "24"
           cache: "pnpm"
       - name: Install frontend dependencies
-        run: pnpm install --frozen-lockfile=false
+        {% if backend in ["python", "go"] %}working-directory: frontend
+        {% endif %}run: pnpm install --frozen-lockfile=false
       - name: Run frontend type check
-        run: pnpm typecheck
+        {% if backend in ["python", "go"] %}working-directory: frontend
+        {% endif %}run: pnpm typecheck
       - name: Run frontend tests
-        run: pnpm test
+        {% if backend in ["python", "go"] %}working-directory: frontend
+        {% endif %}run: pnpm test
       - name: Run frontend lint
-        run: pnpm lint
+        {% if backend in ["python", "go"] %}working-directory: frontend
+        {% endif %}run: pnpm lint
       - name: Build frontend
-        run: pnpm build
+        {% if backend in ["python", "go"] %}working-directory: frontend
+        {% endif %}run: pnpm build
 {% endif %}

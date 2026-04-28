@@ -2,30 +2,34 @@ _subdirectory: template
 _answers_file: ""
 
 _exclude:
-  - "{% if backend != 'python' %}pyproject.toml{% endif %}"
-  - "{% if backend != 'python' %}tests{% endif %}"
-  - "{% if backend != 'go' %}go.mod{% endif %}"
-  - "{% if backend != 'go' or backend_mode != 'cli' %}go.sum{% endif %}"
-  - "{% if backend != 'go' %}cmd{% endif %}"
-  - "{% if backend != 'go' %}internal{% endif %}"
-  - "{% if frontend != 'solid_tailwind_shadcn' %}package.json{% endif %}"
-  - "{% if frontend != 'solid_tailwind_shadcn' %}index.html{% endif %}"
-  - "{% if frontend != 'solid_tailwind_shadcn' %}vite.config.ts{% endif %}"
-  - "{% if frontend != 'solid_tailwind_shadcn' %}tailwind.config.ts{% endif %}"
-  - "{% if frontend != 'solid_tailwind_shadcn' %}postcss.config.cjs{% endif %}"
-  - "{% if frontend != 'solid_tailwind_shadcn' %}tsconfig.json{% endif %}"
-  - "{% if frontend != 'solid_tailwind_shadcn' %}tsconfig.node.json{% endif %}"
-  - "{% if frontend != 'solid_tailwind_shadcn' %}components.json{% endif %}"
-  - "{% if backend != 'python' %}src/{{ project_slug | replace('-', '_') }}{% endif %}"
-  - "{% if backend != 'python' or backend_mode != 'cli' %}src/{{ project_slug | replace('-', '_') }}/cli.py{% endif %}"
-  - "{% if frontend != 'solid_tailwind_shadcn' %}src/main.tsx{% endif %}"
-  - "{% if frontend != 'solid_tailwind_shadcn' %}src/App.tsx{% endif %}"
-  - "{% if frontend != 'solid_tailwind_shadcn' %}src/App.test.tsx{% endif %}"
-  - "{% if frontend != 'solid_tailwind_shadcn' %}src/index.css{% endif %}"
-  - "{% if frontend != 'solid_tailwind_shadcn' %}src/lib{% endif %}"
-  - "{% if frontend != 'solid_tailwind_shadcn' %}src/components{% endif %}"
+  - _source_shared
+  - _source_backend
+  - _source_frontend
+  - "{% if backend != 'python' %}{{ backend_prefix }}pyproject.toml{% endif %}"
+  - "{% if backend != 'python' %}{{ backend_prefix }}tests{% endif %}"
+  - "{% if backend != 'go' %}{{ backend_prefix }}go.mod{% endif %}"
+  - "{% if backend != 'go' or backend_mode != 'cli' %}{{ backend_prefix }}go.sum{% endif %}"
+  - "{% if backend != 'go' %}{{ backend_prefix }}cmd{% endif %}"
+  - "{% if backend != 'go' %}{{ backend_prefix }}internal{% endif %}"
+  - "{% if frontend != 'solid_tailwind_shadcn' %}{{ frontend_prefix }}package.json{% endif %}"
+  - "{% if frontend != 'solid_tailwind_shadcn' %}{{ frontend_prefix }}index.html{% endif %}"
+  - "{% if frontend != 'solid_tailwind_shadcn' %}{{ frontend_prefix }}vite.config.ts{% endif %}"
+  - "{% if frontend != 'solid_tailwind_shadcn' %}{{ frontend_prefix }}tailwind.config.ts{% endif %}"
+  - "{% if frontend != 'solid_tailwind_shadcn' %}{{ frontend_prefix }}postcss.config.cjs{% endif %}"
+  - "{% if frontend != 'solid_tailwind_shadcn' %}{{ frontend_prefix }}tsconfig.json{% endif %}"
+  - "{% if frontend != 'solid_tailwind_shadcn' %}{{ frontend_prefix }}tsconfig.node.json{% endif %}"
+  - "{% if frontend != 'solid_tailwind_shadcn' %}{{ frontend_prefix }}components.json{% endif %}"
+  - "{% if backend != 'python' %}{{ backend_prefix }}src/{{ project_slug | replace('-', '_') }}{% endif %}"
+  - "{% if backend != 'python' or backend_mode != 'cli' %}{{ backend_prefix }}src/{{ project_slug | replace('-', '_') }}/cli.py{% endif %}"
+  - "{% if frontend != 'solid_tailwind_shadcn' %}{{ frontend_prefix }}src/main.tsx{% endif %}"
+  - "{% if frontend != 'solid_tailwind_shadcn' %}{{ frontend_prefix }}src/App.tsx{% endif %}"
+  - "{% if frontend != 'solid_tailwind_shadcn' %}{{ frontend_prefix }}src/App.test.tsx{% endif %}"
+  - "{% if frontend != 'solid_tailwind_shadcn' %}{{ frontend_prefix }}src/index.css{% endif %}"
+  - "{% if frontend != 'solid_tailwind_shadcn' %}{{ frontend_prefix }}src/lib{% endif %}"
+  - "{% if frontend != 'solid_tailwind_shadcn' %}{{ frontend_prefix }}src/components{% endif %}"
   - "{% if backend != 'python' and frontend != 'solid_tailwind_shadcn' %}src{% endif %}"
-  - "{% if backend not in ['python', 'go'] or backend_mode != 'cli' or config_enabled != 'true' %}config{% endif %}"
+  - "{% if backend not in ['python', 'go'] or backend_mode != 'cli' or config_enabled != 'true' %}{{ backend_prefix }}config{% endif %}"
+
 
 project_name:
   type: str
@@ -86,6 +90,18 @@ frontend:
     Solid + Tailwind + shadcn-solid: solid_tailwind_shadcn
     None: none
   default: none
+
+backend_prefix:
+  type: str
+  default: >-
+    {% if backend in ['python', 'go'] and frontend == 'solid_tailwind_shadcn' %}backend/{% endif %}
+  when: false
+
+frontend_prefix:
+  type: str
+  default: >-
+    {% if backend in ['python', 'go'] and frontend == 'solid_tailwind_shadcn' %}frontend/{% endif %}
+  when: false
 
 config_enabled:
   type: str
