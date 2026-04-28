@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import os
+import select
 import signal
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -84,10 +86,23 @@ def wait_for_output(process: subprocess.Popen[str], needle: str, timeout: float 
     deadline = time.monotonic() + timeout
     output = ""
     assert process.stdout is not None
+    stdout_fd = process.stdout.fileno()
+    os.set_blocking(stdout_fd, False)
     while time.monotonic() < deadline:
-        line = process.stdout.readline()
-        if line:
-            output += line
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            break
+        ready, _, _ = select.select([stdout_fd], [], [], min(0.05, remaining))
+        if not ready:
+            if process.poll() is not None:
+                break
+            continue
+        try:
+            chunk = os.read(stdout_fd, 4096)
+        except BlockingIOError:
+            continue
+        if chunk:
+            output += chunk.decode()
             if needle in output:
                 return output
         elif process.poll() is not None:
@@ -95,6 +110,39 @@ def wait_for_output(process: subprocess.Popen[str], needle: str, timeout: float 
         else:
             time.sleep(0.05)
     raise AssertionError(f"did not observe {needle!r}; saw {output!r}")
+
+
+def test_wait_for_output_times_out_for_live_process_without_output() -> None:
+    process = subprocess.Popen(
+        [sys.executable, "-c", "import time; time.sleep(30)"],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        start_new_session=True,
+    )
+    result: list[BaseException] = []
+
+    def call_wait_for_output() -> None:
+        try:
+            wait_for_output(process, "never-emitted", timeout=0.2)
+        except BaseException as error:
+            result.append(error)
+
+    thread = threading.Thread(target=call_wait_for_output)
+    started = time.monotonic()
+    thread.start()
+    thread.join(timeout=1.0)
+    elapsed = time.monotonic() - started
+    try:
+        assert not thread.is_alive(), "wait_for_output blocked past its timeout"
+        assert elapsed < 1.0
+        assert len(result) == 1
+        assert isinstance(result[0], AssertionError)
+        assert "never-emitted" in str(result[0])
+    finally:
+        pid = process.pid
+        terminate(process)
+        assert_no_live_process(pid)
 
 
 def terminate(process: subprocess.Popen[str]) -> None:
