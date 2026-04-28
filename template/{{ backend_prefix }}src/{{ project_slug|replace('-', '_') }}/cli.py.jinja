@@ -83,7 +83,7 @@ def build_parser() -> argparse.ArgumentParser:
     """Build the CLI parser."""
     parser = argparse.ArgumentParser(
         prog="{{ project_slug }}",
-        description="{{ description }}",
+        description={{ description | tojson }},
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
@@ -164,7 +164,7 @@ def print_tail(path: Path, lines: int) -> int:
         return file.tell()
 
 
-@click.group(help="{{ description }}")
+@click.group(help={{ description | tojson }})
 def app() -> None:
     """Run the command group."""
 

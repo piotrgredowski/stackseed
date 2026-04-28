@@ -142,6 +142,31 @@ def test_generated_frontend_validators_pass_and_build_outputs_assets(tmp_path: P
     assert "1 passed" in tests.stdout
 
 
+def test_frontend_metadata_with_jsx_sensitive_characters_validates(tmp_path: Path) -> None:
+    project = render_project(
+        tmp_path,
+        "frontend-jsx-sensitive",
+        project_name='Acme <Portal> "UI"',
+        description='Ship <safe> "interfaces"',
+    )
+
+    app = (project / "src" / "App.tsx").read_text()
+    app_test = (project / "src" / "App.test.tsx").read_text()
+    assert '{"Acme \\u003cPortal\\u003e \\"UI\\""}' in app
+    assert '{"Ship \\u003csafe\\u003e \\"interfaces\\""}' in app
+    assert 'toContain("Acme \\u003cPortal\\u003e \\"UI\\"")' in app_test
+
+    for command in [
+        ["pnpm", "install"],
+        ["pnpm", "typecheck"],
+        ["pnpm", "test"],
+        ["pnpm", "lint"],
+        ["pnpm", "build"],
+    ]:
+        result = run_command(command, cwd=project)
+        assert result.returncode == 0, f"failed {' '.join(command)}\n{result.stdout}"
+
+
 def test_python_and_go_backends_compose_with_frontend(tmp_path: Path) -> None:
     samples = [
         ("python-frontend", {"backend": "python"}),

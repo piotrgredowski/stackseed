@@ -115,6 +115,31 @@ def test_go_module_packages_and_cobra_cli_help(tmp_path: Path) -> None:
     assert "--follow" in command_help.stdout
 
 
+def test_go_project_name_with_quotes_renders_valid_source_and_tests(tmp_path: Path) -> None:
+    project = render_project(
+        tmp_path,
+        "go-quoted-name",
+        project_name='Acme "Quotes"',
+    )
+
+    service = (project / "internal" / "go_quoted_name" / "service.go").read_text()
+    service_test = (project / "internal" / "go_quoted_name" / "service_test.go").read_text()
+    assert 'const ProjectName = "Acme \\"Quotes\\""' in service
+    assert '"Hello from " + "Acme \\"Quotes\\""' in service_test
+
+    for command in [
+        ["go", "mod", "download"],
+        ["go", "test", "./..."],
+        ["go", "vet", "./..."],
+    ]:
+        result = run_command(command, cwd=project)
+        assert result.returncode == 0, f"failed {' '.join(command)}\n{result.stdout}"
+
+    gofmt = run_command(["gofmt", "-l", "."], cwd=project)
+    assert gofmt.returncode == 0, gofmt.stdout
+    assert gofmt.stdout.strip() == ""
+
+
 def test_go_stack_absent_for_python_and_none_backends(tmp_path: Path) -> None:
     python_project = render_project(tmp_path, "python-without-go", backend="python")
     none_project = render_project(tmp_path, "none-without-go", backend="none")

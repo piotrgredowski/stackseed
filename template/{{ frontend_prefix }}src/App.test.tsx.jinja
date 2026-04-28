@@ -13,7 +13,7 @@ describe("App", () => {
 
     render(() => <App />, root);
 
-    expect(root.textContent).toContain("{{ project_name }}");
+    expect(root.textContent).toContain({{ project_name | tojson }});
     expect(root.textContent).toContain("Solid + Tailwind + shadcn-solid");
   });
 });

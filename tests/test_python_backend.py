@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+import tomllib
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -116,6 +117,29 @@ def test_python_package_importable_and_cli_variants_have_scoped_dependencies(
 
         pyproject = (project / "pyproject.toml").read_text()
         assert ('"click>=' in pyproject) is expects_click
+
+
+def test_python_description_with_quotes_renders_valid_toml_and_validators(
+    tmp_path: Path,
+) -> None:
+    project = render_project(
+        tmp_path,
+        "python-quoted-description",
+        description='She said "hello"',
+    )
+
+    pyproject = tomllib.loads((project / "pyproject.toml").read_text())
+    assert pyproject["project"]["description"] == 'She said "hello"'
+
+    for command in [
+        ["uv", "sync", "--dev"],
+        ["uv", "run", "pytest"],
+        ["uv", "run", "ruff", "check", "."],
+        ["uv", "run", "ruff", "format", "--check", "."],
+        ["uv", "run", "pyright"],
+    ]:
+        result = run_command(command, cwd=project)
+        assert result.returncode == 0, f"failed {' '.join(command)}\n{result.stdout}"
 
 
 def test_python_stack_absent_for_go_and_none_backends(tmp_path: Path) -> None:

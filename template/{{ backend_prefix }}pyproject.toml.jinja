@@ -1,7 +1,7 @@
 [project]
 name = "{{ project_slug }}"
 version = "0.1.0"
-description = "{{ description }}"
+description = {{ description | tojson }}
 requires-python = ">=3.11"
 dependencies = [
 {% if backend_mode == "cli" and python_cli_framework == "click" -%}

@@ -2,7 +2,7 @@ package {{ project_slug|replace('-', '_') }}
 
 import "fmt"
 
-const ProjectName = "{{ project_name }}"
+const ProjectName = {{ project_name | tojson }}
 
 func Greeting(name string) string {
 	if name == "" {

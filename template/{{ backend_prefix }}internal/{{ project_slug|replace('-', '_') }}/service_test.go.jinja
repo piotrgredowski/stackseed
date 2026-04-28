@@ -12,7 +12,7 @@ func TestGreeting(t *testing.T) {
 
 func TestGreetingUsesProjectNameByDefault(t *testing.T) {
 	got := Greeting("")
-	want := "Hello from {{ project_name }}"
+	want := "Hello from " + {{ project_name | tojson }}
 	if got != want {
 		t.Fatalf("Greeting(\"\") = %q, want %q", got, want)
 	}
