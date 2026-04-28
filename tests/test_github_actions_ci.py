@@ -201,6 +201,37 @@ def test_ci_runs_only_selected_stack_validators_and_setup(tmp_path: Path) -> Non
         assert_absent(ci_text, forbidden)
 
 
+def test_frontend_ci_does_not_cache_pnpm_without_generated_lockfile(tmp_path: Path) -> None:
+    samples = [
+        ("frontend-cache-ci", {"frontend": "solid_tailwind_shadcn"}, Path(".")),
+        (
+            "python-frontend-cache-ci",
+            {"backend": "python", "frontend": "solid_tailwind_shadcn"},
+            Path("frontend"),
+        ),
+    ]
+
+    for name, answers, frontend_dir in samples:
+        project = render_project(tmp_path, name, **answers)
+        ci_text = workflow(project)
+        commands = run_commands(ci_text)
+
+        assert not (project / frontend_dir / "pnpm-lock.yaml").exists()
+        assert 'cache: "pnpm"' not in ci_text
+        assert "cache: pnpm" not in ci_text
+        assert "cache-dependency-path" not in ci_text
+        assert "actions/setup-node@v4" in ci_text
+        assert "pnpm/action-setup@v4" in ci_text
+        assert "pnpm install --frozen-lockfile=false" in commands
+        for command in ["pnpm typecheck", "pnpm test", "pnpm lint", "pnpm build"]:
+            assert command in commands
+
+        if frontend_dir != Path("."):
+            assert len(re.findall(r"working-directory: frontend", ci_text)) >= 5
+        else:
+            assert "working-directory: frontend" not in ci_text
+
+
 def test_combined_ci_composes_validators_once_and_matches_docs(tmp_path: Path) -> None:
     samples = [
         ("python-frontend-ci", {"backend": "python", "frontend": "solid_tailwind_shadcn"}),
