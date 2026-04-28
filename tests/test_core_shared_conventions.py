@@ -153,7 +153,7 @@ def test_shared_files_are_git_trackable_and_transients_ignored_for_stack_matrix(
     samples = {
         "minimal": {},
         "python": {"backend": "python"},
-        "go": {"backend": "go"},
+        "go-shared": {"backend": "go"},
         "frontend": {"frontend": "solid_tailwind_shadcn"},
         "full": {"backend": "python", "frontend": "solid_tailwind_shadcn"},
     }
@@ -299,6 +299,62 @@ def test_invalid_answers_fail_before_rendering_project(tmp_path: Path) -> None:
         assert result.returncode != 0, result.stdout
         assert diagnostic in result.stdout or "Invalid choice" in result.stdout
         assert not (output_dir / "README.md").exists()
+
+
+def test_language_keyword_project_slugs_fail_before_rendering_source(tmp_path: Path) -> None:
+    invalid_cases = [
+        (
+            "python-keyword",
+            {
+                "project_slug": "class",
+                "backend": "python",
+            },
+            [Path("src/class/__init__.py"), Path("tests/test_class.py")],
+            ["import class as package", "from class.cli import"],
+        ),
+        (
+            "go-keyword",
+            {
+                "project_slug": "type",
+                "backend": "go",
+            },
+            [Path("internal/type/service.go"), Path("cmd/type/main.go")],
+            ["package type", " type.Greeting"],
+        ),
+    ]
+    for name, answers, invalid_paths, invalid_text in invalid_cases:
+        output_dir = tmp_path / name
+        data = {
+            "project_name": name.replace("-", " ").title(),
+            "project_slug": name,
+            "description": f"Generated sample for {name}",
+            "author_name": "Template Tester",
+            "license": "MIT",
+            "backend": "none",
+            "backend_mode": "library",
+            "python_cli_framework": "argparse",
+            "frontend": "none",
+            "config_enabled": "false",
+            "ci_provider": "github",
+        }
+        data.update(answers)
+        command = ["uvx", "copier", "copy", "--trust", "--defaults"]
+        for key, value in data.items():
+            command.extend(["--data", f"{key}={value}"])
+        command.extend([str(REPO_ROOT), str(output_dir)])
+
+        result = run_command(command)
+
+        assert result.returncode != 0, result.stdout
+        assert "project_slug" in result.stdout
+        for invalid_path in invalid_paths:
+            assert not (output_dir / invalid_path).exists()
+        if output_dir.exists():
+            rendered_text = "\n".join(
+                path.read_text(errors="ignore") for path in output_dir.rglob("*") if path.is_file()
+            )
+            for needle in invalid_text:
+                assert needle not in rendered_text
 
 
 def test_rendering_is_deterministic_and_does_not_mutate_template_repo(tmp_path: Path) -> None:

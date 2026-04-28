@@ -42,6 +42,21 @@ project_slug:
   validator: >-
     {% if not (project_slug | regex_search('^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$')) -%}
     project_slug must start with a lowercase letter and contain only lowercase letters, digits, and single hyphens.
+    {%- elif backend == 'python' and (project_slug | replace('-', '_')) in [
+      'False', 'None', 'True', 'and', 'as', 'assert', 'async', 'await', 'break',
+      'class', 'continue', 'def', 'del', 'elif', 'else', 'except', 'finally',
+      'for', 'from', 'global', 'if', 'import', 'in', 'is', 'lambda',
+      'nonlocal', 'not', 'or', 'pass', 'raise', 'return', 'try', 'while',
+      'with', 'yield'
+    ] -%}
+    project_slug must not be a Python reserved keyword when backend is python.
+    {%- elif backend == 'go' and (project_slug | replace('-', '_')) in [
+      'break', 'default', 'func', 'interface', 'select', 'case', 'defer',
+      'go', 'map', 'struct', 'chan', 'else', 'goto', 'package', 'switch',
+      'const', 'fallthrough', 'if', 'range', 'type', 'continue', 'for',
+      'import', 'return', 'var'
+    ] -%}
+    project_slug must not be a Go reserved keyword when backend is go.
     {%- endif %}
 
 description:
