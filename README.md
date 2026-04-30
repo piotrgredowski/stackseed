@@ -10,7 +10,8 @@ minimal starter projects without running post-generation scaffold fetchers.
 Every generated project includes:
 
 - `README.md` with project-local setup and validation commands
-- `AGENTS.md` and `.agents/project-context.md` with generic contributor guidance
+- `AGENTS.md` and `.agents/project-context.md` with generic contributor
+  guidance, including Conventional Commits message format
 - `.scratchpad/.gitkeep` for ignored temporary work
 - `.gitignore` and `.editorconfig`
 - `.github/workflows/ci.yml` for GitHub Actions
