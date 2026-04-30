@@ -1,4 +1,4 @@
-# Yet Another Project Template
+# Stackseed
 
 A local [Copier](https://copier.readthedocs.io/) template for generating small
 projects with stack-aware documentation, validation commands, and GitHub Actions
@@ -90,13 +90,13 @@ From this repository, render a new project into a directory outside the template
 checkout:
 
 ```sh
-uvx copier copy --trust /path/to/yet-another-project-template ./my-project
+uvx copier copy --trust /path/to/stackseed ./my-project
 ```
 
 If Copier is already installed, this also works:
 
 ```sh
-copier copy --trust /path/to/yet-another-project-template ./my-project
+copier copy --trust /path/to/stackseed ./my-project
 ```
 
 For noninteractive generation, pass answers with `--data`:
@@ -114,7 +114,7 @@ uvx copier copy --trust --defaults \
   --data frontend="none" \
   --data config_enabled="true" \
   --data ci_provider="github" \
-  /path/to/yet-another-project-template \
+  /path/to/stackseed \
   ./python-cli-app
 ```
 
@@ -149,7 +149,7 @@ uvx copier copy --trust --defaults \
   --data frontend="none" \
   --data config_enabled="false" \
   --data ci_provider="github" \
-  /path/to/yet-another-project-template \
+  /path/to/stackseed \
   ./minimal-app
 ```
 
@@ -169,7 +169,7 @@ uvx copier copy --trust --defaults \
   --data frontend="none" \
   --data config_enabled="false" \
   --data ci_provider="github" \
-  /path/to/yet-another-project-template \
+  /path/to/stackseed \
   ./python-library
 ```
 
@@ -201,7 +201,7 @@ uvx copier copy --trust --defaults \
   --data frontend="none" \
   --data config_enabled="true" \
   --data ci_provider="github" \
-  /path/to/yet-another-project-template \
+  /path/to/stackseed \
   ./go-cli
 ```
 
@@ -241,7 +241,7 @@ uvx copier copy --trust --defaults \
   --data frontend="solid_tailwind_shadcn" \
   --data config_enabled="false" \
   --data ci_provider="github" \
-  /path/to/yet-another-project-template \
+  /path/to/stackseed \
   ./frontend-app
 ```
 
@@ -287,7 +287,7 @@ uvx copier copy --trust --defaults \
   --data frontend="solid_tailwind_shadcn" \
   --data config_enabled="true" \
   --data ci_provider="github" \
-  /path/to/yet-another-project-template \
+  /path/to/stackseed \
   ./full-stack-app
 ```
 

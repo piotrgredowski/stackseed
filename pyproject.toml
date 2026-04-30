@@ -1,7 +1,7 @@
 [project]
-name = "yet-another-project-template"
+name = "stackseed"
 version = "0.1.0"
-description = "Copier template tests for generated project conventions"
+description = "A Copier template for seeding stack-aware project scaffolds"
 requires-python = ">=3.11"
 dependencies = []
 
