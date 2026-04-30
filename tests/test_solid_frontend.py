@@ -177,7 +177,11 @@ def test_python_and_go_backends_compose_with_frontend(tmp_path: Path) -> None:
         project = render_project(tmp_path, name, **answers)
         assert (project / "frontend" / "package.json").is_file()
         assert (project / "frontend" / "src" / "main.tsx").is_file()
-        assert "/api/calculate" in (project / "frontend" / "src" / "App.tsx").read_text()
+        assert (project / "frontend" / "src" / "api.ts").is_file()
+        frontend_api = (project / "frontend" / "src" / "api.ts").read_text()
+        assert "/api/calculate" in frontend_api
+        assert "CalculatorRequest" in frontend_api
+        assert "CalculatorResponse" in frontend_api
         assert "/api" in (project / "frontend" / "vite.config.ts").read_text()
         if answers["backend"] == "python":
             assert (project / "backend" / "pyproject.toml").is_file()

@@ -1,4 +1,4 @@
-{% if frontend == "solid_tailwind_shadcn" -%}
+{% if backend_mode == "api" or frontend == "solid_tailwind_shadcn" -%}
 """HTTP API for {{ project_name }}."""
 
 from __future__ import annotations

@@ -61,9 +61,34 @@ def test_go_library_renders_buildable_module_without_other_stacks(tmp_path: Path
     assert "Cobra" not in (project / "go.mod").read_text()
 
 
+def test_go_api_mode_renders_http_server_without_frontend_or_cobra(tmp_path: Path) -> None:
+    project = render_project(tmp_path, "go-api", backend_mode="api")
+
+    main = (project / "cmd" / "go-api" / "main.go").read_text()
+    service = (project / "internal" / "go_api" / "service.go").read_text()
+    service_test = (project / "internal" / "go_api" / "service_test.go").read_text()
+
+    assert 'mux.HandleFunc("POST /api/calculate", go_api.CalculateHandler)' in main
+    assert 'mux.HandleFunc("GET /healthz", go_api.HealthHandler)' in main
+    assert 'os.Getenv("API_ADDRESS")' in main
+    assert 'return "127.0.0.1:8080"' in main
+    assert "github.com/spf13/cobra" not in (project / "go.mod").read_text()
+    assert not (project / "frontend").exists()
+    assert not (project / "package.json").exists()
+    assert "func CalculateHandler" in service
+    assert "func HealthHandler" in service
+    assert "TestCalculateHandler" in service_test
+    assert "TestHealthHandler" in service_test
+
+    readme = (project / "README.md").read_text()
+    assert "Backend mode: API" in readme
+    assert "Backend API: `go run ./cmd/go-api`" in readme
+
+
 def test_go_generated_validators_pass_for_library_and_cli(tmp_path: Path) -> None:
     samples = [
         ("go-library", {"backend_mode": "library"}, False),
+        ("go-api", {"backend_mode": "api"}, False),
         ("go-cli", {"backend_mode": "cli"}, True),
     ]
 

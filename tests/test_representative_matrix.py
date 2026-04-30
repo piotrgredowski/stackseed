@@ -86,9 +86,11 @@ def test_representative_matrix_names_all_required_samples() -> None:
     assert [sample.sample_id for sample in REPRESENTATIVE_SAMPLES] == [
         "minimal",
         "python-library",
+        "python-api",
         "python-argparse-cli",
         "python-click-cli",
         "go-library",
+        "go-api",
         "go-cobra-cli",
         "frontend-only",
         "python-frontend",

@@ -21,7 +21,7 @@ _exclude:
   - "{% if frontend != 'solid_tailwind_shadcn' %}{{ frontend_prefix }}components.json{% endif %}"
   - "{% if backend != 'python' %}{{ backend_prefix }}src/{{ project_slug | replace('-', '_') }}{% endif %}"
   - "{% if backend != 'python' or backend_mode != 'cli' %}{{ backend_prefix }}src/{{ project_slug | replace('-', '_') }}/cli.py{% endif %}"
-  - "{% if backend != 'python' or frontend != 'solid_tailwind_shadcn' %}{{ backend_prefix }}src/{{ project_slug | replace('-', '_') }}/api.py{% endif %}"
+  - "{% if backend != 'python' or (backend_mode != 'api' and frontend != 'solid_tailwind_shadcn') %}{{ backend_prefix }}src/{{ project_slug | replace('-', '_') }}/api.py{% endif %}"
   - "{% if backend not in ['python', 'go'] or frontend != 'solid_tailwind_shadcn' %}docker-compose.yml{% endif %}"
   - "{% if backend not in ['python', 'go'] or frontend != 'solid_tailwind_shadcn' %}{{ backend_prefix }}Dockerfile{% endif %}"
   - "{% if backend not in ['python', 'go'] or frontend != 'solid_tailwind_shadcn' %}{{ backend_prefix }}.dockerignore{% endif %}"
@@ -31,6 +31,7 @@ _exclude:
   - "{% if frontend != 'solid_tailwind_shadcn' %}{{ frontend_prefix }}src/main.tsx{% endif %}"
   - "{% if frontend != 'solid_tailwind_shadcn' %}{{ frontend_prefix }}src/App.tsx{% endif %}"
   - "{% if frontend != 'solid_tailwind_shadcn' %}{{ frontend_prefix }}src/App.test.tsx{% endif %}"
+  - "{% if frontend != 'solid_tailwind_shadcn' or backend not in ['python', 'go'] %}{{ frontend_prefix }}src/api.ts{% endif %}"
   - "{% if frontend != 'solid_tailwind_shadcn' %}{{ frontend_prefix }}src/index.css{% endif %}"
   - "{% if frontend != 'solid_tailwind_shadcn' %}{{ frontend_prefix }}src/lib{% endif %}"
   - "{% if frontend != 'solid_tailwind_shadcn' %}{{ frontend_prefix }}src/components{% endif %}"
@@ -95,8 +96,13 @@ backend_mode:
   help: Backend mode to document and scaffold when applicable.
   choices:
     Library/service: library
+    API: api
     CLI: cli
   default: library
+  validator: >-
+    {% if backend_mode == 'api' and backend not in ['python', 'go'] -%}
+    backend_mode api requires a backend stack.
+    {%- endif %}
 
 python_cli_framework:
   type: str

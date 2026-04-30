@@ -93,6 +93,7 @@ def _sample(
 REPRESENTATIVE_SAMPLES = (
     _sample("minimal"),
     _sample("python-library", backend="python", validators=PYTHON_VALIDATORS),
+    _sample("python-api", backend="python", backend_mode="api", validators=PYTHON_VALIDATORS),
     _sample(
         "python-argparse-cli",
         backend="python",
@@ -110,6 +111,7 @@ REPRESENTATIVE_SAMPLES = (
         cli_help=(("uv", "run", "python-click-cli", "--help"),),
     ),
     _sample("go-library", backend="go", validators=GO_VALIDATORS),
+    _sample("go-api", backend="go", backend_mode="api", validators=GO_VALIDATORS),
     _sample(
         "go-cobra-cli",
         backend="go",

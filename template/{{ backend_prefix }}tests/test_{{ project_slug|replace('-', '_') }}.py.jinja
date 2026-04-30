@@ -99,7 +99,7 @@ def test_cli_logging_configures_application_log_file() -> None:
 def test_library_has_project_metadata() -> None:
     assert package.__doc__ is not None
 {% endif %}
-{%- if frontend == "solid_tailwind_shadcn" %}
+{%- if backend_mode == "api" or frontend == "solid_tailwind_shadcn" %}
 
 def test_api_calculate_returns_sum() -> None:
     from fastapi.testclient import TestClient

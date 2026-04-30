@@ -1,4 +1,7 @@
 import { createSignal } from "solid-js";
+{% if backend in ["python", "go"] %}
+import { calculateSum } from "./api";
+{% endif %}
 
 export function App() {
   const [left, setLeft] = createSignal(2);
@@ -11,15 +14,7 @@ export function App() {
     setResult(null);
 {% if backend in ["python", "go"] %}
     try {
-      const response = await fetch("/api/calculate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ left: left(), right: right() }),
-      });
-      if (!response.ok) {
-        throw new Error("Calculator request failed");
-      }
-      const payload = (await response.json()) as { result: number };
+      const payload = await calculateSum({ left: left(), right: right() });
       setResult(payload.result);
     } catch {
       setError("Unable to calculate with the backend API.");

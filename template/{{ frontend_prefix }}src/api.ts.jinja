@@ -1,0 +1,20 @@
+export type CalculatorRequest = {
+  left: number;
+  right: number;
+};
+
+export type CalculatorResponse = {
+  result: number;
+};
+
+export async function calculateSum(payload: CalculatorRequest): Promise<CalculatorResponse> {
+  const response = await fetch("/api/calculate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error("Calculator request failed");
+  }
+  return (await response.json()) as CalculatorResponse;
+}

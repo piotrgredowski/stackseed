@@ -301,6 +301,45 @@ def test_invalid_answers_fail_before_rendering_project(tmp_path: Path) -> None:
         assert not (output_dir / "README.md").exists()
 
 
+def test_api_backend_mode_requires_backend_stack(tmp_path: Path) -> None:
+    output_dir = tmp_path / "bad-api-mode-without-backend"
+    command = [
+        "uvx",
+        "copier",
+        "copy",
+        "--trust",
+        "--defaults",
+        "--data",
+        "project_name=Invalid API Mode",
+        "--data",
+        "project_slug=invalid-api-mode",
+        "--data",
+        "description=Invalid API mode",
+        "--data",
+        "author_name=Template Tester",
+        "--data",
+        "license=MIT",
+        "--data",
+        "backend=none",
+        "--data",
+        "backend_mode=api",
+        "--data",
+        "frontend=none",
+        "--data",
+        "config_enabled=false",
+        "--data",
+        "ci_provider=github",
+        str(REPO_ROOT),
+        str(output_dir),
+    ]
+
+    result = run_command(command)
+
+    assert result.returncode != 0, result.stdout
+    assert "backend_mode api requires a backend stack" in result.stdout
+    assert not (output_dir / "README.md").exists()
+
+
 def test_language_keyword_project_slugs_fail_before_rendering_source(tmp_path: Path) -> None:
     invalid_cases = [
         (

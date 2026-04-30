@@ -59,11 +59,30 @@ def test_python_library_renders_src_layout_and_meaningful_tests(tmp_path: Path) 
     assert not (project / "package.json").exists()
 
 
+def test_python_api_mode_renders_fastapi_without_frontend(tmp_path: Path) -> None:
+    project = render_project(tmp_path, "python-api", backend_mode="api")
+    package_dir = project / "src" / "python_api"
+
+    assert (package_dir / "api.py").is_file()
+    assert not (package_dir / "cli.py").exists()
+    assert not (project / "frontend").exists()
+    assert not (project / "package.json").exists()
+    assert '"fastapi[standard]>=' in (project / "pyproject.toml").read_text()
+
+    readme = (project / "README.md").read_text()
+    assert "Backend API: `uv run uvicorn python_api.api:app --reload`" in readme
+
+    api_tests = (project / "tests" / "test_python_api.py").read_text()
+    assert "test_api_healthz_returns_ok" in api_tests
+    assert "test_api_calculate_returns_sum" in api_tests
+
+
 def test_python_generated_validators_pass_for_library_argparse_and_click(
     tmp_path: Path,
 ) -> None:
     samples = [
         ("python-library", {"backend_mode": "library"}),
+        ("python-api", {"backend_mode": "api"}),
         ("python-argparse", {"backend_mode": "cli", "python_cli_framework": "argparse"}),
         ("python-click", {"backend_mode": "cli", "python_cli_framework": "click"}),
     ]

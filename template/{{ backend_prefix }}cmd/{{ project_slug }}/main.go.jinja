@@ -277,7 +277,7 @@ func readNewLines(path string, offset int64) ([]string, int64, error) {
 func init() {
 	cobra.EnableCommandSorting = false
 }
-{% elif frontend == "solid_tailwind_shadcn" -%}
+{% elif backend_mode == "api" or frontend == "solid_tailwind_shadcn" -%}
 import (
 	"fmt"
 	"log"

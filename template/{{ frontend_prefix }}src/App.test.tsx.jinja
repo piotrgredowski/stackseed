@@ -41,7 +41,10 @@ describe("App", () => {
 {% if backend in ["python", "go"] %}
     expect(globalThis.fetch).toHaveBeenCalledWith(
       "/api/calculate",
-      expect.objectContaining({ method: "POST" }),
+      expect.objectContaining({
+        body: JSON.stringify({ left: 2, right: 3 }),
+        method: "POST",
+      }),
     );
 {% endif %}
   });

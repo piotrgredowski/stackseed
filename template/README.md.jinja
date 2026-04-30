@@ -7,7 +7,7 @@
 - Author: {{ author_name }}
 - License: {{ license }}
 - Backend: {% if backend == "python" %}Python{% elif backend == "go" %}Go{% else %}None{% endif %}
-- Backend mode: {% if backend_mode == "cli" %}CLI{% else %}Library/service{% endif %}
+- Backend mode: {% if backend_mode == "cli" %}CLI{% elif backend_mode == "api" %}API{% else %}Library/service{% endif %}
 {% if backend == "python" and backend_mode == "cli" -%}
 - Python CLI framework: {{ python_cli_framework }}
 {% endif -%}
@@ -55,12 +55,16 @@ Shared files and selected stack assets live at the repository root.
 
 {% if backend == "python" and frontend == "solid_tailwind_shadcn" -%}
 - Backend API from `backend/`: `uv run uvicorn {{ project_slug | replace('-', '_') }}.api:app --reload`
+{% elif backend == "python" and backend_mode == "api" -%}
+- Backend API: `uv run uvicorn {{ project_slug | replace('-', '_') }}.api:app --reload`
 {% elif backend == "go" and frontend == "solid_tailwind_shadcn" -%}
 {% if backend_mode == "cli" -%}
 - Backend API from `backend/`: `go run ./cmd/{{ project_slug }} serve`
 {% else -%}
 - Backend API from `backend/`: `go run ./cmd/{{ project_slug }}`
 {% endif -%}
+{% elif backend == "go" and backend_mode == "api" -%}
+- Backend API: `go run ./cmd/{{ project_slug }}`
 {% elif backend_mode == "cli" and backend == "python" -%}
 - Calculator CLI: `uv run {{ project_slug }} calculate 2 3`
 {% elif backend_mode == "cli" and backend == "go" -%}

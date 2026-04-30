@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-{% if frontend == "solid_tailwind_shadcn" -%}
+{% if backend_mode == "api" or frontend == "solid_tailwind_shadcn" -%}
 from pydantic import BaseModel
 
 

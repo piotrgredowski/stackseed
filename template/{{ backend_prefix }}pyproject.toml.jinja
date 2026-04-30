@@ -4,7 +4,7 @@ version = "0.1.0"
 description = {{ description | tojson }}
 requires-python = ">=3.11"
 dependencies = [
-{% if frontend == "solid_tailwind_shadcn" -%}
+{% if backend_mode == "api" or frontend == "solid_tailwind_shadcn" -%}
     "fastapi[standard]>=0.115",
 {% endif -%}
 {% if backend_mode == "cli" and python_cli_framework == "click" -%}
