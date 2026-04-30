@@ -1,0 +1,24 @@
+{% if frontend == "solid_tailwind_shadcn" -%}
+"""HTTP API for {{ project_name }}."""
+
+from __future__ import annotations
+
+from fastapi import FastAPI
+
+from .calculator import CalculatorInput, CalculatorResult, add
+
+APPLICATION_NAME = "{{ project_slug }}"
+
+app = FastAPI(title=APPLICATION_NAME)
+
+
+@app.get("/healthz")
+def healthz() -> dict[str, str]:
+    return {"status": "ok"}
+
+
+@app.post("/api/calculate")
+def calculate(payload: CalculatorInput) -> CalculatorResult:
+    """Calculate the sum of two integers."""
+    return add(payload.left, payload.right)
+{% endif -%}

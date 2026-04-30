@@ -1,0 +1,67 @@
+{% if backend == "python" -%}
+FROM ghcr.io/astral-sh/uv:0.8-python3.13-bookworm-slim AS builder
+
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy
+
+WORKDIR /app
+
+COPY pyproject.toml ./
+COPY src ./src
+
+RUN uv sync --no-dev --no-editable
+
+FROM python:3.13-slim-bookworm AS runtime
+
+ENV PATH="/app/.venv/bin:$PATH" \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+RUN groupadd --system app && useradd --system --gid app --home-dir /nonexistent app
+
+WORKDIR /app
+
+COPY --from=builder --chown=app:app /app/.venv /app/.venv
+
+USER app
+
+EXPOSE 8000
+
+CMD ["uvicorn", "{{ project_slug | replace('-', '_') }}.api:app", "--host", "0.0.0.0", "--port", "8000"]
+{% elif backend == "go" -%}
+FROM golang:1.22-bookworm AS builder
+
+WORKDIR /src
+
+COPY go.mod ./
+{% if backend_mode == "cli" -%}
+COPY go.sum ./
+{% endif -%}
+RUN go mod download
+
+COPY cmd ./cmd
+COPY internal ./internal
+
+RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/{{ project_slug }} ./cmd/{{ project_slug }}
+
+FROM alpine:3.20 AS runtime
+
+ENV API_ADDRESS=0.0.0.0:8000 \
+    APP_LOG_DIR=/tmp/logs
+
+RUN addgroup -S app && adduser -S -G app -h /nonexistent app
+
+WORKDIR /app
+
+COPY --from=builder --chown=app:app /out/{{ project_slug }} /app/{{ project_slug }}
+
+USER app
+
+EXPOSE 8000
+
+{% if backend_mode == "cli" -%}
+CMD ["/app/{{ project_slug }}", "serve"]
+{% else -%}
+CMD ["/app/{{ project_slug }}"]
+{% endif -%}
+{% endif -%}

@@ -5,8 +5,21 @@ from __future__ import annotations
 
 import argparse
 from collections.abc import Sequence
+import logging
 from pathlib import Path
 import time
+
+from .calculator import add
+
+APPLICATION_NAME = "{{ project_slug }}"
+LOGS_DIRECTORY = "logs"
+LOG_FILE_NAME = f"{APPLICATION_NAME}.log"
+LOG_FORMAT = "%(asctime)s %(levelname)s [%(name)s] %(message)s"
+{% if config_enabled == "true" %}
+CONFIG_DIRECTORY = "config"
+CONFIG_FILE_NAME = f"{APPLICATION_NAME}.toml"
+{% endif %}
+logger = logging.getLogger(APPLICATION_NAME)
 
 
 def project_root() -> Path:
@@ -16,13 +29,29 @@ def project_root() -> Path:
 
 def logs_path() -> Path:
     """Return the path used by the generated log commands."""
-    return project_root() / "logs" / "{{ project_slug }}.log"
+    return project_root() / LOGS_DIRECTORY / LOG_FILE_NAME
+
+
+def configure_logging() -> None:
+    """Configure application file logging."""
+    path = logs_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    logger.setLevel(logging.INFO)
+    for handler in list(logger.handlers):
+        if isinstance(handler, logging.FileHandler) and Path(handler.baseFilename) == path:
+            if path.exists():
+                return
+            logger.removeHandler(handler)
+            handler.close()
+    handler = logging.FileHandler(path)
+    handler.setFormatter(logging.Formatter(LOG_FORMAT))
+    logger.addHandler(handler)
 
 
 {% if config_enabled == "true" -%}
 def config_path() -> Path:
     """Return the generated config file path."""
-    return project_root() / "config" / "{{ project_slug }}.toml"
+    return project_root() / CONFIG_DIRECTORY / CONFIG_FILE_NAME
 
 
 {% endif -%}
@@ -79,6 +108,11 @@ def _show_logs(args: argparse.Namespace) -> int:
     return 0
 
 
+def _calculate(args: argparse.Namespace) -> int:
+    print(add(args.left, args.right).result)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Build the CLI parser."""
     parser = argparse.ArgumentParser(
@@ -96,6 +130,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     path_parser = subparsers.add_parser("show-logs-path", help="Print the application log path.")
     path_parser.set_defaults(handler=_show_logs_path)
+    calculate_parser = subparsers.add_parser("calculate", help="Add two integers.")
+    calculate_parser.add_argument("left", type=int)
+    calculate_parser.add_argument("right", type=int)
+    calculate_parser.set_defaults(handler=_calculate)
 {% if config_enabled == "true" %}
     config_parser = subparsers.add_parser("show-config-path", help="Print the config file path.")
     config_parser.set_defaults(handler=_show_config_path)
@@ -105,6 +143,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the CLI."""
+    configure_logging()
     parser = build_parser()
     args = parser.parse_args(argv)
     return args.handler(args)
@@ -113,10 +152,23 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 import time
 
 import click
+
+from .calculator import add
+
+APPLICATION_NAME = "{{ project_slug }}"
+LOGS_DIRECTORY = "logs"
+LOG_FILE_NAME = f"{APPLICATION_NAME}.log"
+LOG_FORMAT = "%(asctime)s %(levelname)s [%(name)s] %(message)s"
+{% if config_enabled == "true" %}
+CONFIG_DIRECTORY = "config"
+CONFIG_FILE_NAME = f"{APPLICATION_NAME}.toml"
+{% endif %}
+logger = logging.getLogger(APPLICATION_NAME)
 
 
 def project_root() -> Path:
@@ -126,13 +178,29 @@ def project_root() -> Path:
 
 def logs_path() -> Path:
     """Return the path used by the generated log commands."""
-    return project_root() / "logs" / "{{ project_slug }}.log"
+    return project_root() / LOGS_DIRECTORY / LOG_FILE_NAME
+
+
+def configure_logging() -> None:
+    """Configure application file logging."""
+    path = logs_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    logger.setLevel(logging.INFO)
+    for handler in list(logger.handlers):
+        if isinstance(handler, logging.FileHandler) and Path(handler.baseFilename) == path:
+            if path.exists():
+                return
+            logger.removeHandler(handler)
+            handler.close()
+    handler = logging.FileHandler(path)
+    handler.setFormatter(logging.Formatter(LOG_FORMAT))
+    logger.addHandler(handler)
 
 
 {% if config_enabled == "true" -%}
 def config_path() -> Path:
     """Return the generated config file path."""
-    return project_root() / "config" / "{{ project_slug }}.toml"
+    return project_root() / CONFIG_DIRECTORY / CONFIG_FILE_NAME
 
 
 {% endif -%}
@@ -205,7 +273,16 @@ def show_config_path() -> None:
 
 
 {% endif -%}
+@app.command("calculate")
+@click.argument("left", type=int)
+@click.argument("right", type=int)
+def calculate(left: int, right: int) -> None:
+    """Add two integers."""
+    click.echo(add(left, right).result)
+
+
 def main() -> None:
     """Run the CLI."""
+    configure_logging()
     app()
 {% endif -%}

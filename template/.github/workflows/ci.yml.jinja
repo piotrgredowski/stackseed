@@ -43,7 +43,7 @@ jobs:
         {% endif %}run: uv run ruff format --check .
       - name: Run Python type check
         {% if frontend == "solid_tailwind_shadcn" %}working-directory: backend
-        {% endif %}run: uv run pyright
+        {% endif %}run: uv run basedpyright
 {% endif %}
 {% if backend == "go" %}
   go:

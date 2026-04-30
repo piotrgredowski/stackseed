@@ -108,6 +108,11 @@ def test_go_module_packages_and_cobra_cli_help(tmp_path: Path) -> None:
     assert help_result.returncode == 0, help_result.stdout
     assert "show-logs" in help_result.stdout
     assert "show-logs-path" in help_result.stdout
+    assert "calculate" in help_result.stdout
+
+    calculate = run_command(["go", "run", "./cmd/go-cli", "calculate", "2", "3"], cwd=project)
+    assert calculate.returncode == 0, calculate.stdout
+    assert calculate.stdout.strip() == "5"
 
     command_help = run_command(["go", "run", "./cmd/go-cli", "show-logs", "--help"], cwd=project)
     assert command_help.returncode == 0, command_help.stdout

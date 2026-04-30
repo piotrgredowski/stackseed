@@ -1,10 +1,13 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it{% if backend in ["python", "go"] %}, vi{% endif %} } from "vitest";
 import { render } from "solid-js/web";
 import { App } from "./App";
 
 describe("App", () => {
   afterEach(() => {
     document.body.innerHTML = "";
+{% if backend in ["python", "go"] %}
+    vi.restoreAllMocks();
+{% endif %}
   });
 
   it("renders the generated project shell", () => {
@@ -15,5 +18,58 @@ describe("App", () => {
 
     expect(root.textContent).toContain({{ project_name | tojson }});
     expect(root.textContent).toContain("Solid + Tailwind + shadcn-solid");
+    expect(root.textContent).toContain("Calculator example");
   });
+
+  it("calculates a sum", async () => {
+{% if backend in ["python", "go"] %}
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ result: 5 }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+{% endif %}
+    const root = document.createElement("div");
+    document.body.append(root);
+
+    render(() => <App />, root);
+    root.querySelector("button")?.click();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(root.textContent).toContain("Result: 5");
+{% if backend in ["python", "go"] %}
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      "/api/calculate",
+      expect.objectContaining({ method: "POST" }),
+    );
+{% endif %}
+  });
+{% if backend in ["python", "go"] %}
+
+  it("clears stale results when backend calculation fails", async () => {
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ result: 5 }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 500 }));
+    const root = document.createElement("div");
+    document.body.append(root);
+
+    render(() => <App />, root);
+    const button = root.querySelector("button");
+    button?.click();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(root.textContent).toContain("Result: 5");
+
+    button?.click();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(root.textContent).not.toContain("Result: 5");
+    expect(root.textContent).toContain("Unable to calculate with the backend API.");
+  });
+{% endif %}
 });

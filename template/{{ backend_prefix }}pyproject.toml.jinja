@@ -4,6 +4,9 @@ version = "0.1.0"
 description = {{ description | tojson }}
 requires-python = ">=3.11"
 dependencies = [
+{% if frontend == "solid_tailwind_shadcn" -%}
+    "fastapi[standard]>=0.115",
+{% endif -%}
 {% if backend_mode == "cli" and python_cli_framework == "click" -%}
     "click>=8.0",
 {% endif -%}
@@ -22,7 +25,7 @@ build-backend = "uv_build"
 dev = [
     "pytest>=8.0",
     "ruff>=0.8",
-    "pyright>=1.1",
+    "basedpyright>=1.28",
 ]
 
 [tool.pytest.ini_options]
@@ -31,7 +34,7 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 100
 
-[tool.pyright]
+[tool.basedpyright]
 include = ["src", "tests"]
 pythonVersion = "3.11"
 typeCheckingMode = "strict"

@@ -1,6 +1,11 @@
 package {{ project_slug|replace('-', '_') }}
 
-import "testing"
+import (
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+)
 
 func TestGreeting(t *testing.T) {
 	got := Greeting("Generated Go")
@@ -15,5 +20,48 @@ func TestGreetingUsesProjectNameByDefault(t *testing.T) {
 	want := "Hello from " + {{ project_name | tojson }}
 	if got != want {
 		t.Fatalf("Greeting(\"\") = %q, want %q", got, want)
+	}
+}
+
+func TestAdd(t *testing.T) {
+	got := Add(2, 3)
+	if got != 5 {
+		t.Fatalf("Add(2, 3) = %d, want 5", got)
+	}
+}
+
+func TestCalculateHandler(t *testing.T) {
+	request := httptest.NewRequest(
+		http.MethodPost,
+		"/api/calculate",
+		strings.NewReader(`{"left":2,"right":3}`),
+	)
+	response := httptest.NewRecorder()
+
+	CalculateHandler(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", response.Code, http.StatusOK)
+	}
+	got := strings.TrimSpace(response.Body.String())
+	want := `{"result":5}`
+	if got != want {
+		t.Fatalf("body = %q, want %q", got, want)
+	}
+}
+
+func TestHealthHandler(t *testing.T) {
+	request := httptest.NewRequest(http.MethodGet, "/healthz", nil)
+	response := httptest.NewRecorder()
+
+	HealthHandler(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", response.Code, http.StatusOK)
+	}
+	got := strings.TrimSpace(response.Body.String())
+	want := `{"status":"ok"}`
+	if got != want {
+		t.Fatalf("body = %q, want %q", got, want)
 	}
 }

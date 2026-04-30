@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -139,7 +140,7 @@ def test_generated_frontend_validators_pass_and_build_outputs_assets(tmp_path: P
     tests = run_command(["pnpm", "test", "--", "--reporter=verbose"], cwd=project)
     assert tests.returncode == 0, tests.stdout
     assert "src/App.test.tsx" in tests.stdout
-    assert "1 passed" in tests.stdout
+    assert "2 passed" in tests.stdout
 
 
 def test_frontend_metadata_with_jsx_sensitive_characters_validates(tmp_path: Path) -> None:
@@ -176,10 +177,96 @@ def test_python_and_go_backends_compose_with_frontend(tmp_path: Path) -> None:
         project = render_project(tmp_path, name, **answers)
         assert (project / "frontend" / "package.json").is_file()
         assert (project / "frontend" / "src" / "main.tsx").is_file()
+        assert "/api/calculate" in (project / "frontend" / "src" / "App.tsx").read_text()
+        assert "/api" in (project / "frontend" / "vite.config.ts").read_text()
         if answers["backend"] == "python":
             assert (project / "backend" / "pyproject.toml").is_file()
+            assert (project / "backend" / "src" / "python_frontend" / "api.py").is_file()
             assert not (project / "backend" / "go.mod").exists()
         else:
             assert (project / "backend" / "go.mod").is_file()
             assert not (project / "backend" / "pyproject.toml").exists()
         assert not (project / "package.json").exists()
+
+
+def test_python_and_go_full_stack_render_secure_minimal_container_scaffold(
+    tmp_path: Path,
+) -> None:
+    project = render_project(tmp_path, "python-docker", backend="python")
+
+    compose = (project / "docker-compose.yml").read_text()
+    backend_dockerfile = (project / "backend" / "Dockerfile").read_text()
+    frontend_dockerfile = (project / "frontend" / "Dockerfile").read_text()
+    nginx = (project / "frontend" / "nginx.conf").read_text()
+    api = (project / "backend" / "src" / "python_docker" / "api.py").read_text()
+    api_tests = (project / "backend" / "tests" / "test_python_docker.py").read_text()
+
+    assert "read_only: true" in compose
+    assert compose.count("cap_drop:") == 2
+    assert compose.count("no-new-privileges:true") == 2
+    assert 'ports:\n      - "8080:8080"' in compose
+    assert 'expose:\n      - "8000"' in compose
+    assert "/healthz" in compose
+    assert "USER app" in backend_dockerfile
+    assert "uv sync --no-dev --no-editable" in backend_dockerfile
+    assert "tests" in (project / "backend" / ".dockerignore").read_text()
+    assert "nginxinc/nginx-unprivileged" in frontend_dockerfile
+    assert "node:22-alpine AS builder" in frontend_dockerfile
+    assert "proxy_pass http://backend:8000/api/" in nginx
+    assert 'add_header X-Content-Type-Options "nosniff" always;' in nginx
+    assert '@app.get("/healthz")' in api
+    assert "test_api_healthz_returns_ok" in api_tests
+
+    if shutil.which("docker") is not None:
+        compose_config = run_command(
+            ["docker", "compose", "-f", "docker-compose.yml", "config"], cwd=project
+        )
+        assert compose_config.returncode == 0, compose_config.stdout
+
+    go_project = render_project(tmp_path, "go-docker", backend="go")
+    go_compose = (go_project / "docker-compose.yml").read_text()
+    go_backend_dockerfile = (go_project / "backend" / "Dockerfile").read_text()
+    go_service = (go_project / "backend" / "internal" / "go_docker" / "service.go").read_text()
+    go_main = (go_project / "backend" / "cmd" / "go-docker" / "main.go").read_text()
+
+    assert "read_only: true" in go_compose
+    assert go_compose.count("cap_drop:") == 2
+    assert go_compose.count("no-new-privileges:true") == 2
+    assert 'ports:\n      - "8080:8080"' in go_compose
+    assert 'expose:\n      - "8000"' in go_compose
+    assert "/healthz" in go_compose
+    assert "USER app" in go_backend_dockerfile
+    assert "golang:1.22-bookworm AS builder" in go_backend_dockerfile
+    assert "CGO_ENABLED=0 GOOS=linux go build" in go_backend_dockerfile
+    assert "ENV API_ADDRESS=0.0.0.0:8000" in go_backend_dockerfile
+    assert "APP_LOG_DIR=/tmp/logs" in go_backend_dockerfile
+    assert 'CMD ["/app/go-docker"]' in go_backend_dockerfile
+    assert "coverage.out" in (go_project / "backend" / ".dockerignore").read_text()
+    assert "nginxinc/nginx-unprivileged" in (go_project / "frontend" / "Dockerfile").read_text()
+    assert (
+        "proxy_pass http://backend:8000/api/"
+        in (go_project / "frontend" / "nginx.conf").read_text()
+    )
+    assert "func HealthHandler" in go_service
+    assert 'os.Getenv("API_ADDRESS")' in go_main
+
+    if shutil.which("docker") is not None:
+        go_compose_config = run_command(
+            ["docker", "compose", "-f", "docker-compose.yml", "config"], cwd=go_project
+        )
+        assert go_compose_config.returncode == 0, go_compose_config.stdout
+
+
+def test_container_scaffold_is_python_full_stack_only(tmp_path: Path) -> None:
+    samples = [
+        ("frontend-docker-absent", {"backend": "none"}),
+        ("python-library-docker-absent", {"backend": "python", "frontend": "none"}),
+        ("go-library-docker-absent", {"backend": "go", "frontend": "none"}),
+    ]
+
+    for name, answers in samples:
+        project = render_project(tmp_path, name, **answers)
+        assert not (project / "docker-compose.yml").exists()
+        assert not (project / "Dockerfile").exists()
+        assert not (project / "backend" / "Dockerfile").exists()
+        assert not (project / "frontend" / "Dockerfile").exists()

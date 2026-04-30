@@ -171,6 +171,11 @@ def test_cli_log_behavior_is_equivalent_across_argparse_click_and_cobra(tmp_path
         assert help_result.returncode == 0, help_result.stdout + help_result.stderr
         assert "show-logs" in help_result.stdout
         assert "show-logs-path" in help_result.stdout
+        assert "calculate" in help_result.stdout
+
+        calculate = run_command([*base, "calculate", "2", "3"], cwd=project)
+        assert calculate.returncode == 0, calculate.stdout + calculate.stderr
+        assert calculate.stdout.strip() == "5"
 
         command_help = run_command([*base, "show-logs", "--help"], cwd=project)
         assert command_help.returncode == 0, command_help.stdout + command_help.stderr
@@ -187,7 +192,7 @@ def test_cli_log_behavior_is_equivalent_across_argparse_click_and_cobra(tmp_path
         assert path_from_root.stdout == path_from_tmp.stdout
         log_path = Path(path_from_root.stdout.strip())
         assert log_path.is_absolute()
-        assert not log_path.exists()
+        assert log_path.is_file()
 
         log_path.parent.mkdir(parents=True, exist_ok=True)
         fixture = [f"{slug}-line-{index:02d}" for index in range(1, 13)]

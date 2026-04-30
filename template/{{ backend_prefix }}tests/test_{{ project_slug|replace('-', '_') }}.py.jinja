@@ -7,11 +7,26 @@ from pytest import CaptureFixture
 
 from {{ project_slug | replace('-', '_') }}.cli import main
 {% endif -%}
+{% if backend_mode == "cli" -%}
+from {{ project_slug | replace('-', '_') }}.cli import (
+    APPLICATION_NAME,
+    LOG_FILE_NAME,
+    LOGS_DIRECTORY,
+    configure_logging,
+    logger,
+    logs_path,
+)
+{% endif -%}
 import {{ project_slug | replace('-', '_') }} as package
+from {{ project_slug | replace('-', '_') }}.calculator import add
 
 
 def test_package_exposes_version() -> None:
     assert package.__version__ == "0.1.0"
+
+
+def test_calculator_adds_two_integers() -> None:
+    assert add(2, 3).result == 5
 
 
 {% if backend_mode == "cli" and python_cli_framework == "argparse" -%}
@@ -23,6 +38,27 @@ def test_argparse_cli_help_lists_log_commands(capsys: CaptureFixture[str]) -> No
     output = capsys.readouterr().out
     assert "show-logs" in output
     assert "show-logs-path" in output
+    assert "calculate" in output
+
+
+def test_argparse_cli_calculate_outputs_sum(capsys: CaptureFixture[str]) -> None:
+    assert main(["calculate", "2", "3"]) == 0
+    assert capsys.readouterr().out.strip() == "5"
+
+
+def test_cli_logging_configures_application_log_file() -> None:
+    assert LOGS_DIRECTORY == "logs"
+    assert LOG_FILE_NAME == f"{APPLICATION_NAME}.log"
+    path = logs_path()
+    path.unlink(missing_ok=True)
+
+    configure_logging()
+    logger.info("test log entry")
+    for handler in logger.handlers:
+        handler.flush()
+
+    assert path.is_file()
+    assert "test log entry" in path.read_text()
 {% elif backend_mode == "cli" and python_cli_framework == "click" -%}
 def test_click_cli_help_lists_log_commands() -> None:
     from click.testing import CliRunner
@@ -33,7 +69,54 @@ def test_click_cli_help_lists_log_commands() -> None:
     assert result.exit_code == 0
     assert "show-logs" in result.output
     assert "show-logs-path" in result.output
+    assert "calculate" in result.output
+
+
+def test_click_cli_calculate_outputs_sum() -> None:
+    from click.testing import CliRunner
+
+    from {{ project_slug | replace('-', '_') }}.cli import app
+
+    result = CliRunner().invoke(app, ["calculate", "2", "3"])
+    assert result.exit_code == 0
+    assert result.output.strip() == "5"
+
+
+def test_cli_logging_configures_application_log_file() -> None:
+    assert LOGS_DIRECTORY == "logs"
+    assert LOG_FILE_NAME == f"{APPLICATION_NAME}.log"
+    path = logs_path()
+    path.unlink(missing_ok=True)
+
+    configure_logging()
+    logger.info("test log entry")
+    for handler in logger.handlers:
+        handler.flush()
+
+    assert path.is_file()
+    assert "test log entry" in path.read_text()
 {% else -%}
 def test_library_has_project_metadata() -> None:
     assert package.__doc__ is not None
+{% endif %}
+{%- if frontend == "solid_tailwind_shadcn" %}
+
+def test_api_calculate_returns_sum() -> None:
+    from fastapi.testclient import TestClient
+
+    from {{ project_slug | replace('-', '_') }}.api import app
+
+    response = TestClient(app).post("/api/calculate", json={"left": 2, "right": 3})
+    assert response.status_code == 200
+    assert response.json() == {"result": 5}
+
+
+def test_api_healthz_returns_ok() -> None:
+    from fastapi.testclient import TestClient
+
+    from {{ project_slug | replace('-', '_') }}.api import app
+
+    response = TestClient(app).get("/healthz")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
 {% endif -%}

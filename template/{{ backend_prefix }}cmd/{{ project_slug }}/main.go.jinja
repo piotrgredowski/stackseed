@@ -5,9 +5,14 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"log"
+{% if frontend == "solid_tailwind_shadcn" %}
+	"net/http"
+{% endif %}
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -15,7 +20,27 @@ import (
 	"example.com/{{ project_slug }}/internal/{{ project_slug|replace('-', '_') }}"
 )
 
+{% if config_enabled == "true" -%}
+const applicationName = "{{ project_slug }}"
+const logsDirectory = "logs"
+const logFileName = applicationName + ".log"
+const configDirectory = "config"
+const configFileName = applicationName + ".toml"
+
+{% else -%}
+const applicationName = "{{ project_slug }}"
+const logsDirectory = "logs"
+const logFileName = applicationName + ".log"
+
+{% endif -%}
+
+var appLogger = log.New(io.Discard, "", log.LstdFlags)
+
 func main() {
+	if err := configureLogger(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 	rootCmd := newRootCommand()
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
@@ -32,6 +57,10 @@ func newRootCommand() *cobra.Command {
 	}
 	rootCmd.AddCommand(newShowLogsPathCommand())
 	rootCmd.AddCommand(newShowLogsCommand())
+	rootCmd.AddCommand(newCalculateCommand())
+{% if frontend == "solid_tailwind_shadcn" %}
+	rootCmd.AddCommand(newServeCommand())
+{% endif -%}
 {% if config_enabled == "true" %}
 	rootCmd.AddCommand(newShowConfigPathCommand())
 {% endif %}
@@ -83,6 +112,52 @@ func newShowLogsCommand() *cobra.Command {
 	return command
 }
 
+func newCalculateCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "calculate LEFT RIGHT",
+		Short: "Add two integers",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			left, err := strconv.Atoi(args[0])
+			if err != nil {
+				return err
+			}
+			right, err := strconv.Atoi(args[1])
+			if err != nil {
+				return err
+			}
+			fmt.Fprintln(cmd.OutOrStdout(), {{ project_slug|replace('-', '_') }}.Add(left, right))
+			return nil
+		},
+	}
+}
+
+{% if frontend == "solid_tailwind_shadcn" -%}
+func newServeCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "serve",
+		Short: "Run the backend API server",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return serveAPI()
+		},
+	}
+}
+
+func serveAPI() error {
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST /api/calculate", {{ project_slug|replace('-', '_') }}.CalculateHandler)
+	mux.HandleFunc("GET /healthz", {{ project_slug|replace('-', '_') }}.HealthHandler)
+	return http.ListenAndServe(apiAddress(), mux)
+}
+
+func apiAddress() string {
+	if address := os.Getenv("API_ADDRESS"); address != "" {
+		return address
+	}
+	return "127.0.0.1:8080"
+}
+
+{% endif -%}
 {% if config_enabled == "true" -%}
 func newShowConfigPathCommand() *cobra.Command {
 	return &cobra.Command{
@@ -96,15 +171,32 @@ func newShowConfigPathCommand() *cobra.Command {
 
 {% endif -%}
 func logPath() string {
-	return filepath.Join(projectRoot(), "logs", "{{ project_slug }}.log")
+	if directory := os.Getenv("APP_LOG_DIR"); directory != "" {
+		return filepath.Join(directory, logFileName)
+	}
+	return filepath.Join(projectRoot(), logsDirectory, logFileName)
 }
 
 {% if config_enabled == "true" -%}
 func configPath() string {
-	return filepath.Join(projectRoot(), "config", "{{ project_slug }}.toml")
+	return filepath.Join(projectRoot(), configDirectory, configFileName)
 }
 
 {% endif -%}
+func configureLogger() error {
+	path := logPath()
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return err
+	}
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
+	if err != nil {
+		return err
+	}
+	appLogger.SetOutput(file)
+	appLogger.SetPrefix("[" + applicationName + "] ")
+	return nil
+}
+
 func projectRoot() string {
 	_, file, _, ok := runtime.Caller(0)
 	if !ok {
@@ -184,6 +276,32 @@ func readNewLines(path string, offset int64) ([]string, int64, error) {
 
 func init() {
 	cobra.EnableCommandSorting = false
+}
+{% elif frontend == "solid_tailwind_shadcn" -%}
+import (
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+
+	"example.com/{{ project_slug }}/internal/{{ project_slug|replace('-', '_') }}"
+)
+
+func main() {
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST /api/calculate", {{ project_slug|replace('-', '_') }}.CalculateHandler)
+	mux.HandleFunc("GET /healthz", {{ project_slug|replace('-', '_') }}.HealthHandler)
+	mux.HandleFunc("GET /", func(writer http.ResponseWriter, request *http.Request) {
+		fmt.Fprintln(writer, {{ project_slug|replace('-', '_') }}.Greeting(""))
+	})
+	log.Fatal(http.ListenAndServe(apiAddress(), mux))
+}
+
+func apiAddress() string {
+	if address := os.Getenv("API_ADDRESS"); address != "" {
+		return address
+	}
+	return "127.0.0.1:8080"
 }
 {% else -%}
 import (

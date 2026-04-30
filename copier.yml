@@ -21,6 +21,13 @@ _exclude:
   - "{% if frontend != 'solid_tailwind_shadcn' %}{{ frontend_prefix }}components.json{% endif %}"
   - "{% if backend != 'python' %}{{ backend_prefix }}src/{{ project_slug | replace('-', '_') }}{% endif %}"
   - "{% if backend != 'python' or backend_mode != 'cli' %}{{ backend_prefix }}src/{{ project_slug | replace('-', '_') }}/cli.py{% endif %}"
+  - "{% if backend != 'python' or frontend != 'solid_tailwind_shadcn' %}{{ backend_prefix }}src/{{ project_slug | replace('-', '_') }}/api.py{% endif %}"
+  - "{% if backend not in ['python', 'go'] or frontend != 'solid_tailwind_shadcn' %}docker-compose.yml{% endif %}"
+  - "{% if backend not in ['python', 'go'] or frontend != 'solid_tailwind_shadcn' %}{{ backend_prefix }}Dockerfile{% endif %}"
+  - "{% if backend not in ['python', 'go'] or frontend != 'solid_tailwind_shadcn' %}{{ backend_prefix }}.dockerignore{% endif %}"
+  - "{% if backend not in ['python', 'go'] or frontend != 'solid_tailwind_shadcn' %}{{ frontend_prefix }}Dockerfile{% endif %}"
+  - "{% if backend not in ['python', 'go'] or frontend != 'solid_tailwind_shadcn' %}{{ frontend_prefix }}.dockerignore{% endif %}"
+  - "{% if backend not in ['python', 'go'] or frontend != 'solid_tailwind_shadcn' %}{{ frontend_prefix }}nginx.conf{% endif %}"
   - "{% if frontend != 'solid_tailwind_shadcn' %}{{ frontend_prefix }}src/main.tsx{% endif %}"
   - "{% if frontend != 'solid_tailwind_shadcn' %}{{ frontend_prefix }}src/App.tsx{% endif %}"
   - "{% if frontend != 'solid_tailwind_shadcn' %}{{ frontend_prefix }}src/App.test.tsx{% endif %}"
@@ -62,10 +69,12 @@ project_slug:
 description:
   type: str
   help: Short project description.
+  default: "Generated {{ project_name }} project."
 
 author_name:
   type: str
   help: Project author or owning team.
+  default: Example Team
 
 license:
   type: str

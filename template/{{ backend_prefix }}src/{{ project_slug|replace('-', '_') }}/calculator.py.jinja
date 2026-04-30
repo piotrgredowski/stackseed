@@ -1,0 +1,41 @@
+"""Calculator example for {{ project_name }}."""
+
+from __future__ import annotations
+
+{% if frontend == "solid_tailwind_shadcn" -%}
+from pydantic import BaseModel
+
+
+class CalculatorInput(BaseModel):
+    """Input for calculator requests."""
+
+    left: int
+    right: int
+
+
+class CalculatorResult(BaseModel):
+    """Result for calculator requests."""
+
+    result: int
+{% else -%}
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class CalculatorInput:
+    """Input for calculator requests."""
+
+    left: int
+    right: int
+
+
+@dataclass(frozen=True)
+class CalculatorResult:
+    """Result for calculator requests."""
+
+    result: int
+{% endif %}
+
+def add(left: int, right: int) -> CalculatorResult:
+    """Add two integers."""
+    return CalculatorResult(result=left + right)

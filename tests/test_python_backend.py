@@ -54,7 +54,7 @@ def test_python_library_renders_src_layout_and_meaningful_tests(tmp_path: Path) 
     assert not (package_dir / "cli.py").exists()
     assert (project / "tests" / "test_python_library.py").is_file()
     assert "uv run ruff format --check ." in (project / "README.md").read_text()
-    assert "uv run pyright" in (project / "README.md").read_text()
+    assert "uv run basedpyright" in (project / "README.md").read_text()
     assert not (project / "go.mod").exists()
     assert not (project / "package.json").exists()
 
@@ -75,7 +75,7 @@ def test_python_generated_validators_pass_for_library_argparse_and_click(
             ["uv", "run", "pytest"],
             ["uv", "run", "ruff", "check", "."],
             ["uv", "run", "ruff", "format", "--check", "."],
-            ["uv", "run", "pyright"],
+            ["uv", "run", "basedpyright"],
         ]:
             result = run_command(command, cwd=project)
             assert result.returncode == 0, f"{name} failed {' '.join(command)}\n{result.stdout}"
@@ -136,7 +136,7 @@ def test_python_description_with_quotes_renders_valid_toml_and_validators(
         ["uv", "run", "pytest"],
         ["uv", "run", "ruff", "check", "."],
         ["uv", "run", "ruff", "format", "--check", "."],
-        ["uv", "run", "pyright"],
+        ["uv", "run", "basedpyright"],
     ]:
         result = run_command(command, cwd=project)
         assert result.returncode == 0, f"failed {' '.join(command)}\n{result.stdout}"

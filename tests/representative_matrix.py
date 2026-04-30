@@ -56,7 +56,7 @@ PYTHON_VALIDATORS = (
     ("uv", "run", "pytest"),
     ("uv", "run", "ruff", "check", "."),
     ("uv", "run", "ruff", "format", "--check", "."),
-    ("uv", "run", "pyright"),
+    ("uv", "run", "basedpyright"),
 )
 GO_VALIDATORS = (
     ("go", "mod", "download"),

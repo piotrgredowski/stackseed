@@ -126,7 +126,7 @@ def test_minimal_ci_is_valid_stack_neutral_github_actions_only(tmp_path: Path) -
             "uv run",
             "pytest",
             "ruff",
-            "pyright",
+            "basedpyright",
             "go test",
             "go vet",
             "gofmt",
@@ -157,7 +157,7 @@ def test_ci_runs_only_selected_stack_validators_and_setup(tmp_path: Path) -> Non
                 "uv run pytest",
                 "uv run ruff check .",
                 "uv run ruff format --check .",
-                "uv run pyright",
+                "uv run basedpyright",
             ],
             ["actions/setup-python", "astral-sh/setup-uv"],
             ["actions/setup-go", "actions/setup-node", "pnpm/action-setup", "go test", "pnpm"],
@@ -274,7 +274,7 @@ def test_combined_ci_composes_validators_once_and_matches_docs(tmp_path: Path) -
                 "uv run pytest",
                 "uv run ruff check .",
                 "uv run ruff format --check .",
-                "uv run pyright",
+                "uv run basedpyright",
             ]:
                 assert commands.count(command) == 1
                 assert f"`{command}`" in readme

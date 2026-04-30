@@ -155,7 +155,7 @@ uvx copier copy --trust --defaults \
 
 ### Python library
 
-Generated Python projects use a `src/` layout, `uv`, pytest, Ruff, and Pyright.
+Generated Python projects use a `src/` layout, `uv`, pytest, Ruff, and basedpyright.
 
 ```sh
 uvx copier copy --trust --defaults \
@@ -181,7 +181,7 @@ uv sync --dev
 uv run pytest
 uv run ruff check .
 uv run ruff format --check .
-uv run pyright
+uv run basedpyright
 ```
 
 ### Go CLI
@@ -301,7 +301,7 @@ uv sync --dev
 uv run pytest
 uv run ruff check .
 uv run ruff format --check .
-uv run pyright
+uv run basedpyright
 
 cd ../frontend
 pnpm install

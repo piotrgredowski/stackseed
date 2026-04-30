@@ -1,4 +1,34 @@
+import { createSignal } from "solid-js";
+
 export function App() {
+  const [left, setLeft] = createSignal(2);
+  const [right, setRight] = createSignal(3);
+  const [result, setResult] = createSignal<number | null>(null);
+  const [error, setError] = createSignal<string | null>(null);
+
+  async function calculate() {
+    setError(null);
+    setResult(null);
+{% if backend in ["python", "go"] %}
+    try {
+      const response = await fetch("/api/calculate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ left: left(), right: right() }),
+      });
+      if (!response.ok) {
+        throw new Error("Calculator request failed");
+      }
+      const payload = (await response.json()) as { result: number };
+      setResult(payload.result);
+    } catch {
+      setError("Unable to calculate with the backend API.");
+    }
+{% else %}
+    setResult(left() + right());
+{% endif %}
+  }
+
   return (
     <main class="min-h-screen bg-slate-950 text-slate-50">
       <section class="mx-auto flex min-h-screen max-w-4xl flex-col items-center justify-center gap-6 px-6 text-center">
@@ -7,12 +37,53 @@ export function App() {
         </p>
         <h1 class="text-4xl font-bold tracking-tight sm:text-6xl">{{ "{" }}{{ project_name | tojson }}{{ "}" }}</h1>
         <p class="max-w-2xl text-lg text-slate-300">{{ "{" }}{{ description | tojson }}{{ "}" }}</p>
-        <a
-          class="rounded-md bg-cyan-300 px-4 py-2 font-semibold text-slate-950 shadow-lg shadow-cyan-950/40 transition hover:bg-cyan-200"
-          href="https://www.solidjs.com/"
-        >
-          Build with Solid
-        </a>
+        <div class="w-full max-w-md rounded-xl border border-slate-700 bg-slate-900/80 p-5 text-left shadow-xl">
+          <h2 class="text-lg font-semibold text-cyan-100">Calculator example</h2>
+          <p class="mt-1 text-sm text-slate-400">
+{% if backend in ["python", "go"] %}
+            Calls the backend API using the shared add function.
+{% else %}
+            Runs locally in this frontend-only app.
+{% endif %}
+          </p>
+          <div class="mt-4 grid grid-cols-2 gap-3">
+            <label class="text-sm text-slate-300">
+              Left
+              <input
+                class="mt-1 w-full rounded-md border border-slate-600 bg-slate-950 px-3 py-2 text-slate-50"
+                type="number"
+                value={left()}
+                onInput={(event) => setLeft(Number(event.currentTarget.value))}
+              />
+            </label>
+            <label class="text-sm text-slate-300">
+              Right
+              <input
+                class="mt-1 w-full rounded-md border border-slate-600 bg-slate-950 px-3 py-2 text-slate-50"
+                type="number"
+                value={right()}
+                onInput={(event) => setRight(Number(event.currentTarget.value))}
+              />
+            </label>
+          </div>
+          <button
+            class="mt-4 rounded-md bg-cyan-300 px-4 py-2 font-semibold text-slate-950 shadow-lg shadow-cyan-950/40 transition hover:bg-cyan-200"
+            type="button"
+            onClick={calculate}
+          >
+            Calculate
+          </button>
+          {result() !== null && (
+            <p class="mt-4 text-cyan-100" role="status">
+              Result: {result()}
+            </p>
+          )}
+          {error() && (
+            <p class="mt-4 text-red-300" role="alert">
+              {error()}
+            </p>
+          )}
+        </div>
       </section>
     </main>
   );

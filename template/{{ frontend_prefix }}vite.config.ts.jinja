@@ -4,6 +4,13 @@ import { fileURLToPath, URL } from "node:url";
 
 export default defineConfig({
   plugins: [solid()],
+{% if backend in ["python", "go"] %}
+  server: {
+    proxy: {
+      "/api": "{{ 'http://127.0.0.1:8000' if backend == 'python' else 'http://127.0.0.1:8080' }}",
+    },
+  },
+{% endif %}
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),

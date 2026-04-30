@@ -57,7 +57,7 @@ def expected_validation_commands(sample: RepresentativeSample) -> set[str]:
                 "uv run pytest",
                 "uv run ruff check .",
                 "uv run ruff format --check .",
-                "uv run pyright",
+                "uv run basedpyright",
             }
         )
     if sample.backend == "go":

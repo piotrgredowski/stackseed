@@ -1,0 +1,22 @@
+{% if backend == "python" -%}
+.venv
+__pycache__
+*.py[cod]
+.pytest_cache
+.ruff_cache
+.basedpyright
+.mypy_cache
+.coverage
+htmlcov
+tests
+Dockerfile
+.dockerignore
+{% elif backend == "go" -%}
+bin
+dist
+coverage.out
+*.test
+tests
+Dockerfile
+.dockerignore
+{% endif -%}

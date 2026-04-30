@@ -1,6 +1,10 @@
 package {{ project_slug|replace('-', '_') }}
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+)
 
 const ProjectName = {{ project_name | tojson }}
 
@@ -9,4 +13,48 @@ func Greeting(name string) string {
 		name = ProjectName
 	}
 	return fmt.Sprintf("Hello from %s", name)
+}
+
+type CalculateRequest struct {
+	Left  int `json:"left"`
+	Right int `json:"right"`
+}
+
+type CalculateResponse struct {
+	Result int `json:"result"`
+}
+
+func Add(left int, right int) int {
+	return left + right
+}
+
+func Calculate(request CalculateRequest) CalculateResponse {
+	return CalculateResponse{Result: Add(request.Left, request.Right)}
+}
+
+func CalculateHandler(writer http.ResponseWriter, request *http.Request) {
+	if request.Method != http.MethodPost {
+		http.Error(writer, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var payload CalculateRequest
+	if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
+		http.Error(writer, "invalid request body", http.StatusBadRequest)
+		return
+	}
+	writer.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(writer).Encode(Calculate(payload)); err != nil {
+		http.Error(writer, "failed to encode response", http.StatusInternalServerError)
+	}
+}
+
+func HealthHandler(writer http.ResponseWriter, request *http.Request) {
+	if request.Method != http.MethodGet {
+		http.Error(writer, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	writer.Header().Set("Content-Type", "application/json")
+	if _, err := writer.Write([]byte(`{"status":"ok"}`)); err != nil {
+		http.Error(writer, "failed to encode response", http.StatusInternalServerError)
+	}
 }

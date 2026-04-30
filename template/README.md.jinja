@@ -50,6 +50,31 @@ Shared files and selected stack assets live at the repository root.
 - No stack-specific setup is required yet.
 {% endif %}
 
+{% if backend in ["python", "go"] or frontend == "solid_tailwind_shadcn" -%}
+## Run
+
+{% if backend == "python" and frontend == "solid_tailwind_shadcn" -%}
+- Backend API from `backend/`: `uv run uvicorn {{ project_slug | replace('-', '_') }}.api:app --reload`
+{% elif backend == "go" and frontend == "solid_tailwind_shadcn" -%}
+{% if backend_mode == "cli" -%}
+- Backend API from `backend/`: `go run ./cmd/{{ project_slug }} serve`
+{% else -%}
+- Backend API from `backend/`: `go run ./cmd/{{ project_slug }}`
+{% endif -%}
+{% elif backend_mode == "cli" and backend == "python" -%}
+- Calculator CLI: `uv run {{ project_slug }} calculate 2 3`
+{% elif backend_mode == "cli" and backend == "go" -%}
+- Calculator CLI: `go run ./cmd/{{ project_slug }} calculate 2 3`
+{% endif -%}
+{% if frontend == "solid_tailwind_shadcn" -%}
+{% if backend in ["python", "go"] -%}
+- Frontend from `frontend/`: `pnpm dev`
+{% else -%}
+- Frontend: `pnpm dev`
+{% endif -%}
+{% endif %}
+{% endif -%}
+
 ## Validation
 
 {% if backend == "python" -%}
@@ -69,9 +94,9 @@ Shared files and selected stack assets live at the repository root.
 - Python format check: `uv run ruff format --check .`
 {% endif -%}
 {% if frontend == "solid_tailwind_shadcn" -%}
-- Python type check from `backend/`: `uv run pyright`
+- Python type check from `backend/`: `uv run basedpyright`
 {% else -%}
-- Python type check: `uv run pyright`
+- Python type check: `uv run basedpyright`
 {% endif -%}
 {% endif -%}
 {% if backend == "go" -%}
