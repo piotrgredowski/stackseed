@@ -215,7 +215,7 @@ def test_python_and_go_full_stack_render_secure_minimal_container_scaffold(
     assert "uv sync --no-dev --no-editable" in backend_dockerfile
     assert "tests" in (project / "backend" / ".dockerignore").read_text()
     assert "nginxinc/nginx-unprivileged" in frontend_dockerfile
-    assert "node:22-alpine AS builder" in frontend_dockerfile
+    assert "node:24-alpine AS builder" in frontend_dockerfile
     assert "proxy_pass http://backend:8000/api/" in nginx
     assert 'add_header X-Content-Type-Options "nosniff" always;' in nginx
     assert '@app.get("/healthz")' in api
@@ -240,7 +240,7 @@ def test_python_and_go_full_stack_render_secure_minimal_container_scaffold(
     assert 'expose:\n      - "8000"' in go_compose
     assert "/healthz" in go_compose
     assert "USER app" in go_backend_dockerfile
-    assert "golang:1.22-bookworm AS builder" in go_backend_dockerfile
+    assert "golang:1.27-bookworm AS builder" in go_backend_dockerfile
     assert "CGO_ENABLED=0 GOOS=linux go build" in go_backend_dockerfile
     assert "ENV API_ADDRESS=0.0.0.0:8000" in go_backend_dockerfile
     assert "APP_LOG_DIR=/tmp/logs" in go_backend_dockerfile

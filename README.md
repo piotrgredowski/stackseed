@@ -61,8 +61,8 @@ To work on this template repository:
 To validate generated projects, install the tools for the stacks you select:
 
 - Python projects: `uv`
-- Go projects: Go 1.22 or newer
-- Frontend projects: Node.js and `pnpm`
+- Go projects: Go 1.27 or newer
+- Frontend projects: Node.js 24 or newer and pnpm 11
 
 ## Template repository setup and validation
 

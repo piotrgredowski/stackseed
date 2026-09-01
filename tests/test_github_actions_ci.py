@@ -60,7 +60,7 @@ def assert_valid_github_actions_shape(ci_text: str) -> None:
     assert re.search(r"^jobs:\n", ci_text, re.MULTILINE)
     assert re.search(r"^\s+[a-z][a-z-]*:\n\s+name: ", ci_text, re.MULTILINE)
     assert "runs-on: ubuntu-latest" in ci_text
-    assert "uses: actions/checkout@v4" in ci_text
+    assert "uses: actions/checkout@v7" in ci_text
     assert "\t" not in ci_text
 
 
@@ -121,8 +121,7 @@ def test_minimal_ci_is_valid_stack_neutral_github_actions_only(tmp_path: Path) -
             "actions/setup-python",
             "astral-sh/setup-uv",
             "actions/setup-go",
-            "actions/setup-node",
-            "pnpm/action-setup",
+            "pnpm/setup",
             "uv run",
             "pytest",
             "ruff",
@@ -160,13 +159,13 @@ def test_ci_runs_only_selected_stack_validators_and_setup(tmp_path: Path) -> Non
                 "uv run basedpyright",
             ],
             ["actions/setup-python", "astral-sh/setup-uv"],
-            ["actions/setup-go", "actions/setup-node", "pnpm/action-setup", "go test", "pnpm"],
+            ["actions/setup-go", "pnpm/setup", "go test", "pnpm"],
         ),
         "go-ci": (
             {"backend": "go"},
             ["go mod download", "go test ./...", "go vet ./...", 'test -z "$(gofmt -l .)"'],
             ["actions/setup-go"],
-            ["actions/setup-python", "astral-sh/setup-uv", "actions/setup-node", "pnpm", "uv run"],
+            ["actions/setup-python", "astral-sh/setup-uv", "pnpm", "uv run"],
         ),
         "frontend-ci": (
             {"frontend": "solid_tailwind_shadcn"},
@@ -177,7 +176,7 @@ def test_ci_runs_only_selected_stack_validators_and_setup(tmp_path: Path) -> Non
                 "pnpm lint",
                 "pnpm build",
             ],
-            ["actions/setup-node", "pnpm/action-setup"],
+            ["pnpm/setup"],
             [
                 "actions/setup-python",
                 "astral-sh/setup-uv",
@@ -220,8 +219,10 @@ def test_frontend_ci_does_not_cache_pnpm_without_generated_lockfile(tmp_path: Pa
         assert 'cache: "pnpm"' not in ci_text
         assert "cache: pnpm" not in ci_text
         assert "cache-dependency-path" not in ci_text
-        assert "actions/setup-node@v4" in ci_text
-        assert "pnpm/action-setup@v4" in ci_text
+        assert "pnpm/setup@v2" in ci_text
+        assert "runtime: node@24" in ci_text
+        assert "version: 11.25.0" in ci_text
+        assert "actions/setup-node" not in ci_text
         assert "pnpm install --frozen-lockfile=false" in commands
         for command in ["pnpm typecheck", "pnpm test", "pnpm lint", "pnpm build"]:
             assert command in commands

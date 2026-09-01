@@ -5,10 +5,10 @@ description = {{ description | tojson }}
 requires-python = ">=3.11"
 dependencies = [
 {% if backend_mode == "api" or frontend == "solid_tailwind_shadcn" -%}
-    "fastapi[standard]>=0.115",
+    "fastapi[standard]>=0.141",
 {% endif -%}
 {% if backend_mode == "cli" and python_cli_framework == "click" -%}
-    "click>=8.0",
+    "click>=8.5",
 {% endif -%}
 ]
 
@@ -18,14 +18,14 @@ dependencies = [
 
 {% endif -%}
 [build-system]
-requires = ["uv_build>=0.11.0,<0.12.0"]
+requires = ["uv_build>=0.12.8,<0.13.0"]
 build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
-    "pytest>=8.0",
-    "ruff>=0.8",
-    "basedpyright>=1.28",
+    "pytest>=9.1",
+    "ruff>=0.16",
+    "basedpyright>=1.39",
 ]
 
 [tool.pytest.ini_options]
